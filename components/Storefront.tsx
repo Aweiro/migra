@@ -212,8 +212,8 @@ export async function Storefront({
                                     {currentTitle}
                                 </div>
 
-                                <div className="relative z-10 space-y-4 md:space-y-6">
-                                    <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-white/50 md:text-black/20 pt-2 md:border-t md:border-black/5">
+                                <div className="relative z-10 space-y-6 pt-10 md:pt-0">
+                                    <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-white/50 md:text-black/20 md:pt-2 md:border-t md:border-black/5">
                                         <Link href="/" className="hover:text-white md:hover:text-black transition-colors">Archive</Link>
                                         <span>/</span>
                                         <span className="text-white md:text-black">{currentBreadcrumb}</span>
@@ -353,7 +353,7 @@ export async function Storefront({
                         <h3 className="text-[12px] uppercase tracking-[0.4em] font-black text-black">Empty Library</h3>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-16 md:gap-x-10 md:gap-y-24">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-16 md:gap-x-10 md:gap-y-18">
                         {products.map((product: Product) => (
                             <ProductCard
                                 key={product.id}
