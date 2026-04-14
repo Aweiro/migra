@@ -11,7 +11,7 @@ export default async function ShopLibraryPage({ searchParams }: { searchParams: 
     const resolvedSearchParams = await searchParams;
     return (
         <div className="min-h-screen bg-white">
-            <div className="relative h-[40vh] min-h-[300px] w-full overflow-hidden flex flex-col justify-end">
+            <div className="relative h-[200px] md:h-[40vh] md:min-h-[300px] w-full overflow-hidden flex flex-col justify-end">
                 <Image
                     src="/library_bg.png"
                     alt="Library Background"

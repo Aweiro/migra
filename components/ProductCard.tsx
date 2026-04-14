@@ -138,7 +138,7 @@ export function ProductCard({
           {title}
         </h3>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-3">
           <div className="flex items-center space-x-2">
             <span className="text-[12px] font-bold text-black">
               {formatPrice(price, currency)}
@@ -150,10 +150,10 @@ export function ProductCard({
             )}
           </div>
 
-          {/* Inline Sizes on Hover */}
+          {/* Sizes: Below price on mobile, right-aligned on desktop */}
           {sizes.length > 0 && (
-            <div className={`flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 ${showSizeError ? "scale-110" : ""}`}>
-              {sizes.slice(0, 5).map((size) => (
+            <div className={`flex flex-wrap gap-1 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-x-2 lg:group-hover:translate-x-0 ${showSizeError ? "scale-105" : ""}`}>
+              {sizes.slice(0, 8).map((size) => (
                 <button
                   key={size}
                   onClick={(e) => {
@@ -162,7 +162,7 @@ export function ProductCard({
                     setSelectedSize(selectedSize === size ? null : size);
                     setShowSizeError(false);
                   }}
-                  className={`min-w-[20px] h-5 flex items-center justify-center text-[8px] font-bold border transition-colors ${selectedSize === size
+                  className={`min-w-[24px] h-6 flex items-center justify-center text-[9px] font-bold border transition-colors ${selectedSize === size
                     ? "bg-black text-white border-black"
                     : showSizeError
                       ? "border-red-500 text-red-500 animate-pulse"
@@ -180,19 +180,21 @@ export function ProductCard({
   );
 
   return (
-    <article className={`group relative flex flex-col bg-white ${className}`}>
-      {slug ? (
-        <Link href={`/product/${slug}`} className="block w-full">
-          {cardContent}
-        </Link>
-      ) : (
-        <div className="block w-full">{cardContent}</div>
-      )}
+    <article className={`group relative flex flex-col h-full bg-white ${className}`}>
+      <div className="flex-1">
+        {slug ? (
+          <Link href={`/product/${slug}`} className="block w-full h-full">
+            {cardContent}
+          </Link>
+        ) : (
+          <div className="block w-full h-full">{cardContent}</div>
+        )}
+      </div>
 
-      {/* Quick Add — visible on hover */}
+      {/* Quick Add — Always at the bottom */}
       <button
         onClick={handleAddToCart}
-        className="mt-4 w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] opacity-0 group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
+        className="mt-6 w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] lg:opacity-0 lg:group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
       >
         {isAdded ? "Added ✓" : (sizes.length > 0 && !selectedSize ? (showSizeError ? "Choose Size" : "Select Size") : "Add to Bag")}
       </button>

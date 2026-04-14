@@ -140,25 +140,25 @@ export async function Storefront({
                             </div>
 
                             {/* Text Content */}
-                            <div className="flex-1 px-6 py-20 md:py-24 z-10">
+                            <div className="flex-1 px-6 py-12 md:py-24 z-10">
                                 <div className="max-w-2xl relative">
-                                    <div className="inline-flex items-center px-2 py-1 bg-black text-white text-[8px] uppercase tracking-[0.3em] font-bold mb-8 animate-pulse">
+                                    <div className="inline-flex items-center px-2 py-1 bg-black text-white text-[8px] uppercase tracking-[0.3em] font-bold mb-4 md:mb-8 animate-pulse">
                                         New Arrival / Jan '26
                                     </div>
 
-                                    <h1 className="text-6xl md:text-[7vw] font-black text-black tracking-tighter leading-[0.8] mb-10 uppercase italic">
+                                    <h1 className="text-6xl md:text-[7vw] font-black text-black tracking-tighter leading-[0.8] mb-6 md:mb-10 uppercase italic">
                                         Pure <br /><span className="text-black/10 transition-colors duration-1000">Context</span>
                                     </h1>
 
-                                    <p className="text-sm md:text-lg text-black/60 max-w-sm mb-12 uppercase tracking-[0.2em] leading-relaxed font-light">
+                                    <p className="text-xs md:text-lg text-black/60 max-w-sm mb-8 md:mb-12 uppercase tracking-[0.2em] leading-relaxed font-light">
                                         Redefining the relationship between garment and environment. High-density basics engineered for the contemporary existence.
                                     </p>
 
-                                    <div className="flex flex-wrap gap-6 items-center">
-                                        <Link href="/shop" className="px-12 py-5 bg-black text-white text-[11px] uppercase font-bold tracking-[0.3em] hover:bg-black/90 transform hover:-translate-y-1 transition-all duration-300 shadow-xl shadow-black/10 text-center">
+                                    <div className="flex flex-wrap gap-4 md:gap-6 items-center">
+                                        <Link href="/shop" className="px-10 py-4 md:px-12 md:py-5 bg-black text-white text-[10px] md:text-[11px] uppercase font-bold tracking-[0.3em] hover:bg-black/90 transform hover:-translate-y-1 transition-all duration-300 shadow-xl shadow-black/10 text-center">
                                             Shop Library
                                         </Link>
-                                        <button className="text-black text-[11px] uppercase font-bold tracking-[0.4em] border-b-2 border-black pb-1 hover:text-black/50 transition-colors">
+                                        <button className="text-black text-[10px] md:text-[11px] uppercase font-bold tracking-[0.4em] border-b-2 border-black pb-1 hover:text-black/50 transition-colors">
                                             View Archives
                                         </button>
                                     </div>
@@ -166,7 +166,7 @@ export async function Storefront({
                             </div>
 
                             {/* Image Content (Full height of the smaller panel) */}
-                            <div className="flex-1 w-full h-[500px] md:h-[650px] relative bg-white">
+                            <div className="flex-1 w-full h-[400px] md:h-[650px] relative bg-white">
                                 <Image
                                     src="/hero_sharp.png"
                                     alt="MIGRA Contextual"
@@ -186,9 +186,9 @@ export async function Storefront({
                             </div>
                         </div>
                     ) : (
-                        <div className="mx-auto max-w-[1800px] flex flex-col md:flex-row items-stretch relative h-[150px] md:h-[200px]">
-                            {/* Image Section */}
-                            <div className="flex-1 relative bg-zinc-100 overflow-hidden group">
+                        <div className="mx-auto max-w-[1800px] flex flex-col md:flex-row items-stretch relative h-[200px] md:h-[200px] overflow-hidden group">
+                            {/* Background Image / Desktop Panel */}
+                            <div className="absolute inset-0 md:relative md:flex-1 bg-zinc-100 overflow-hidden">
                                 {(subcategoryData?.category?.image || categoryData?.image) ? (
                                     <Image
                                         src={subcategoryData?.category?.image || categoryData?.image || ""}
@@ -201,33 +201,36 @@ export async function Storefront({
                                         Visual Archive
                                     </div>
                                 )}
-                                {/* Overlay */}
-                                <div className="absolute inset-0 bg-black/5" />
+                                {/* Mobile Dark Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent md:hidden" />
                             </div>
 
                             {/* Text Content */}
-                            <div className="flex-1 bg-white flex flex-col justify-center px-12 md:px-20 border-l border-black/[0.03] relative overflow-hidden">
-                                {/* Abstract background text */}
-                                <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-[12vw] font-black text-black/[0.02] uppercase tracking-tighter leading-none select-none pointer-events-none italic">
+                            <div className="flex-1 md:flex-1 bg-transparent md:bg-white flex flex-col justify-end md:justify-center px-6 pb-4 md:px-20 border-l border-black/[0.03] overflow-hidden">
+                                {/* Abstract background text - hidden on mobile */}
+                                <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-[12vw] font-black text-black/[0.02] uppercase tracking-tighter leading-none select-none pointer-events-none italic hidden md:block">
                                     {currentTitle}
                                 </div>
 
-                                <div className="relative z-10 space-y-6">
-                                    <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-black/20">
-                                        <Link href="/" className="hover:text-black transition-colors">Archive</Link>
+                                <div className="relative z-10 space-y-4 md:space-y-6">
+                                    <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-white/50 md:text-black/20 pt-2 md:border-t md:border-black/5">
+                                        <Link href="/" className="hover:text-white md:hover:text-black transition-colors">Archive</Link>
                                         <span>/</span>
-                                        <span className="text-black">{currentBreadcrumb}</span>
+                                        <span className="text-white md:text-black">{currentBreadcrumb}</span>
                                     </nav>
+                                    <div className="space-y-2">
+                                        <h1 className="text-4xl md:text-[4vw] mb-4 font-black text-white md:text-black tracking-tighter uppercase italic leading-[0.8]">
+                                            {currentTitle}
+                                        </h1>
 
-                                    <h1 className="text-4xl md:text-[4vw] font-black text-black tracking-tighter uppercase italic leading-[0.8]">
-                                        {currentTitle}
-                                    </h1>
-
-                                    <div className="flex items-center gap-4">
-                                        <span className="text-[10px] uppercase tracking-[0.4em] font-black text-black/40">{products.length} OBJECTS</span>
-                                        <div className="w-8 h-[1px] bg-black/10" />
-                                        <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/10 italic">Context Library 26</span>
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-[10px] uppercase tracking-[0.4em] font-black text-white/40 md:text-black/40">{products.length} OBJECTS</span>
+                                            <div className="w-8 h-[1px] bg-white/20 md:bg-black/10" />
+                                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-white/20 md:text-black/10 italic">Context Library 26</span>
+                                        </div>
                                     </div>
+
+
                                 </div>
                             </div>
                         </div>
@@ -238,9 +241,9 @@ export async function Storefront({
             {/* Brand Ticker */}
             {!hideHero && !categorySlug && !subcategorySlug && (
                 <div className="w-full bg-white py-4 overflow-hidden">
-                    <div className="animate-marquee whitespace-nowrap flex items-center gap-12">
+                    <div className="animate-marquee whitespace-nowrap flex items-center gap-2 md:gap-12">
                         {[...tickerLogos, ...tickerLogos].map((logo, i) => (
-                            <div key={i} className="flex-shrink-0 h-14 md:h-18 w-40 md:w-56 relative grayscale opacity-40 hover:opacity-100 transition-opacity duration-300 transform hover:scale-110">
+                            <div key={i} className="flex-shrink-0 h-10 md:h-18 w-24 md:w-56 relative grayscale opacity-40 hover:opacity-100 transition-opacity duration-300 transform hover:scale-110">
                                 <Image
                                     src={logo}
                                     alt="Partner Brand"

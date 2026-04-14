@@ -65,13 +65,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="mx-auto w-full max-w-[1500px] px-6 mb-16">
 
                 {/* Refined Minimal Header */}
-                <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-8">
-                    <nav className="flex items-center gap-3 text-[9px] uppercase tracking-[0.3em] font-black">
+                {/* Refined Responsive Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-black/[0.1] pb-6 mb-8 gap-6">
+                    <nav className="flex flex-wrap items-center gap-y-2 gap-x-3 text-[9px] uppercase tracking-[0.3em] font-black">
                         {breadcrumbs.map((crumb, i) => (
                             <div key={crumb.href} className="flex items-center gap-2">
                                 <Link
                                     href={crumb.href}
-                                    className={i === breadcrumbs.length - 1 ? "text-black" : "text-black/30 hover:text-black transition-colors"}
+                                    className={`${i === breadcrumbs.length - 1 ? "text-black" : "text-black/30 hover:text-black"} transition-colors whitespace-nowrap`}
                                 >
                                     {crumb.label}
                                 </Link>
@@ -80,12 +81,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         ))}
                     </nav>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-4 w-full sm:w-auto border-t sm:border-t-0 border-black/[0.05] pt-4 sm:pt-0">
                         <span className="text-[10px] uppercase tracking-[0.5em] font-black text-black/20">MIGRA®</span>
-                        <div className="w-12 h-[1px] bg-black/10 hidden sm:block" />
+                        <div className="w-12 h-[1px] bg-black/10 hidden xl:block" />
                         <div className="flex items-center gap-2">
-                            <div className="w-1 h-1 rounded-full bg-black" />
-                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black">Archival Item</span>
+                            <div className="w-1 h-1 rounded-full bg-black animate-pulse" />
+                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black whitespace-nowrap">Archival Item</span>
                         </div>
                     </div>
                 </div>
