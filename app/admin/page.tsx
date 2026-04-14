@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function AdminDashboardPage() {
     return (
-        <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 bg-gray-50/50 dark:bg-[#0a0a0a] transition-colors relative overflow-hidden">
+        <div className="py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
             {/* Abstract Background Design */}
             <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none" />
             <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen" />

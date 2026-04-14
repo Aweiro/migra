@@ -186,7 +186,7 @@ export async function Storefront({
                             </div>
                         </div>
                     ) : (
-                        <div className="mx-auto max-w-[1800px] flex flex-col md:flex-row items-stretch relative h-[300px] md:h-[350px]">
+                        <div className="mx-auto max-w-[1800px] flex flex-col md:flex-row items-stretch relative h-[150px] md:h-[200px]">
                             {/* Image Section */}
                             <div className="flex-1 relative bg-zinc-100 overflow-hidden group">
                                 {(subcategoryData?.category?.image || categoryData?.image) ? (
@@ -194,7 +194,7 @@ export async function Storefront({
                                         src={subcategoryData?.category?.image || categoryData?.image || ""}
                                         alt={currentTitle}
                                         fill
-                                        className="object-cover transition-transform duration-[2000ms] group-hover:scale-105"
+                                        className="object-cover transition-all duration-[2000ms] group-hover:scale-105 grayscale contrast-125 brightness-90 opacity-80 group-hover:opacity-100 group-hover:brightness-100"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-[10px] uppercase tracking-widest text-black/10 font-bold italic bg-zinc-50">
@@ -237,10 +237,10 @@ export async function Storefront({
 
             {/* Brand Ticker */}
             {!hideHero && !categorySlug && !subcategorySlug && (
-                <div className="w-full bg-white border-y border-black/5 py-2 mt-12 overflow-hidden">
+                <div className="w-full bg-white py-4 overflow-hidden">
                     <div className="animate-marquee whitespace-nowrap flex items-center gap-12">
                         {[...tickerLogos, ...tickerLogos].map((logo, i) => (
-                            <div key={i} className="flex-shrink-0 h-12 md:h-16 w-32 md:w-48 relative grayscale opacity-40 hover:opacity-100 transition-opacity duration-300 transform hover:scale-110">
+                            <div key={i} className="flex-shrink-0 h-14 md:h-18 w-40 md:w-56 relative grayscale opacity-40 hover:opacity-100 transition-opacity duration-300 transform hover:scale-110">
                                 <Image
                                     src={logo}
                                     alt="Partner Brand"
@@ -255,7 +255,7 @@ export async function Storefront({
 
             {/* Departments Section */}
             {!hideHero && !categorySlug && !subcategorySlug && categories.length > 0 && (
-                <div className="mx-auto max-w-[1800px] px-6 py-12">
+                <div className="mx-auto max-w-[1800px] px-6 mb-6">
                     <div className="flex items-end justify-between mb-16 border-b border-black pb-4">
                         <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black">
                             Explore Departments
@@ -291,7 +291,7 @@ export async function Storefront({
 
             {/* Brand Philosophy Section (Inverse Hover: Color by default, BW on hover) */}
             {!hideHero && !categorySlug && !subcategorySlug && (
-                <div className="bg-white py-24 md:py-32 border-y border-black/5 relative z-20">
+                <div className="bg-white py-24 md:py-32 mb-6 border-y border-black/5 relative z-20">
                     <div className="mx-auto max-w-[1800px] px-6">
                         <div className="flex flex-col md:flex-row gap-16 items-center">
                             <div className="flex-1 relative order-2 md:order-1">

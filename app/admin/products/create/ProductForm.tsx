@@ -134,7 +134,7 @@ export default function ProductForm({
                                     Category
                                 </label>
                                 <select
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     value={selectedCategoryId}
                                     onChange={(e) => setSelectedCategoryId(e.target.value)}
                                     required
@@ -154,7 +154,7 @@ export default function ProductForm({
                                 </label>
                                 <select
                                     name="subcategoryId"
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all disabled:opacity-50"
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all disabled:opacity-50 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     required
                                     disabled={!selectedCategoryId || subcategories.length === 0}
                                 >

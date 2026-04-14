@@ -20,7 +20,7 @@ export default async function AdminProductsPage({
     ]);
 
     return (
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50/50 dark:bg-[#0a0a0a] transition-colors relative">
+        <div className="py-12 px-4 sm:px-6 lg:px-8 relative">
             {/* Background Decor */}
             <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
 
@@ -55,8 +55,8 @@ export default async function AdminProductsPage({
                     <Link
                         href="/admin/products"
                         className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${!categoryId
-                                ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                                : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
+                            ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
+                            : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
                             }`}
                     >
                         All Categories
@@ -66,8 +66,8 @@ export default async function AdminProductsPage({
                             key={cat.id}
                             href={`/admin/products?categoryId=${cat.id}`}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${categoryId === cat.id
-                                    ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                                    : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
+                                ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
+                                : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
                                 }`}
                         >
                             {cat.name}
