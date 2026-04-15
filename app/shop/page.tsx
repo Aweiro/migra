@@ -1,6 +1,7 @@
 import { Storefront } from "@/components/Storefront";
 import Link from "next/link";
 import Image from "next/image";
+import { getServerTranslation } from "@/lib/i18n/server";
 
 export const metadata = {
     title: "Shop Library | MIGRA",
@@ -9,6 +10,7 @@ export const metadata = {
 
 export default async function ShopLibraryPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedSearchParams = await searchParams;
+    const { t } = await getServerTranslation();
     return (
         <div className="min-h-screen bg-white">
             <div className="relative h-[200px] w-full overflow-hidden flex flex-col md:flex-row border-b border-black/[0.03]">
@@ -34,14 +36,14 @@ export default async function ShopLibraryPage({ searchParams }: { searchParams: 
                     <div className="relative z-10 space-y-4 md:space-y-6 pt-14 md:pt-0">
                         {/* Breadcrumbs */}
                         <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-white/40 md:text-black/20 md:pt-2 md:border-t md:border-black/5">
-                            <Link href="/" className="hover:text-white md:hover:text-black transition-colors">Archive</Link>
+                            <Link href="/" className="hover:text-white md:hover:text-black transition-colors">{t('common.archive')}</Link>
                             <span>/</span>
-                            <span className="text-white md:text-black italic">Library</span>
+                            <span className="text-white md:text-black italic">{t('common.library')}</span>
                         </nav>
 
                         <div className="space-y-2">
                             <h1 className="text-4xl md:text-[4vw] font-black text-white md:text-black tracking-tighter uppercase italic leading-[0.8]">
-                                Shop Library
+                                {t('common.shop_library')}
                             </h1>
                             <div className="flex items-center gap-4">
                                 <span className="text-[10px] uppercase tracking-[0.4em] font-black text-white/40 md:text-black/40">2026_ARCHIVE</span>

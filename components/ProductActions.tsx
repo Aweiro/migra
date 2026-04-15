@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "@/lib/stores/cart.store";
 import { useWishlistStore } from "@/lib/stores/wishlist.store";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -15,8 +15,13 @@ export function ProductActions({
     const { t } = useLanguage();
     const safeSizes = sizes || [];
     const [selectedSize, setSelectedSize] = useState<string | null>(safeSizes.length === 1 ? safeSizes[0] : null);
+    const [mounted, setMounted] = useState(false);
     const [isAdded, setIsAdded] = useState(false);
     const [sizeError, setSizeError] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const addToCart = useCartStore((state) => state.addToCart);
     const addToWishlist = useWishlistStore((state) => state.addToWishlist);
@@ -111,6 +116,7 @@ export function ProductActions({
             {/* Buttons */}
             <div className="flex flex-col gap-4">
                 <button
+                    type="button"
                     onClick={handleAddToCart}
                     disabled={!product.isCustomOrder && product.stock <= 0}
                     className="w-full bg-black text-white py-4 text-[11px] uppercase tracking-[0.3em] font-bold hover:bg-black/90 transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -118,16 +124,17 @@ export function ProductActions({
                     {isAdded ? t('product_actions.added_to_library') : ((!product.isCustomOrder && product.stock <= 0) ? t('product_actions.sold_out') : t('product_actions.add_to_library'))}
                 </button>
                 <button
+                    type="button"
                     onClick={handleWishlist}
                     className={`w-full py-3 text-[11px] uppercase tracking-[0.3em] font-bold border flex items-center justify-center gap-3 transition-all duration-300 ${isWishlisted
                         ? "border-black bg-black/5 text-black"
                         : "border-black/10 text-black hover:border-black"
                         }`}
                 >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="mb-[1px]">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={mounted && isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="mb-[1px]">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
-                    {isWishlisted ? t('product_actions.in_wishlist') : t('product_actions.save_for_later')}
+                    {mounted && isWishlisted ? t('product_actions.in_wishlist') : t('product_actions.save_for_later')}
                 </button>
             </div>
         </div>

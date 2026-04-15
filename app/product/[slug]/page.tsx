@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const resolvedParams = await params;
-    const { t } = await getServerTranslation();
+    const { t, lang } = await getServerTranslation();
 
     const rawProduct = await prisma.product.findUnique({
         where: { slug: resolvedParams.slug },
@@ -57,11 +57,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         orderBy: { createdAt: "desc" }
     });
 
+    const catName = (lang === 'en' ? product.subcategory.category.name : (product.subcategory.category as any)[`name_${lang}`] || product.subcategory.category.name);
+    const subName = (lang === 'en' ? product.subcategory.name : (product.subcategory as any)[`name_${lang}`] || product.subcategory.name);
+    const prodName = (lang === 'en' ? product.name : (product as any)[`name_${lang}`] || product.name);
+
     const breadcrumbs = [
         { label: t('common.home'), href: "/" },
-        { label: product.subcategory.category.name, href: `/${product.subcategory.category.slug}` },
-        { label: product.subcategory.name, href: `/${product.subcategory.category.slug}/${product.subcategory.slug}` },
-        { label: product.name, href: `/product/${product.slug}` }
+        { label: catName, href: `/${product.subcategory.category.slug}` },
+        { label: subName, href: `/${product.subcategory.category.slug}/${product.subcategory.slug}` },
+        { label: prodName, href: `/product/${product.slug}` }
     ];
 
     return (
@@ -109,7 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                             {/* Title & Price */}
                             <div className="space-y-4 text-black">
                                 <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.9] text-black">
-                                    {product.name}
+                                    {prodName}
                                 </h1>
 
                                 <div className="flex items-baseline gap-4 text-black">
@@ -133,7 +137,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                             <ProductActions
                                 product={{
                                     id: product.id,
-                                    name: product.name,
+                                    name: prodName,
                                     price: discountedPrice,
                                     image: product.images?.[0],
                                     slug: product.slug,
@@ -153,7 +157,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         <div className="space-y-6">
                             <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">{t('product.description')}</h3>
                             <div className="text-xs font-light leading-loose text-black/70 whitespace-pre-wrap">
-                                {product.description || t('product.default_desc')}
+                                {(product as any)[`description_${lang}`] || product.description || t('product.default_desc')}
                             </div>
                         </div>
                         <div className="space-y-6">
@@ -186,7 +190,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                                 <ProductCard
                                     key={p.id}
                                     id={p.id}
-                                    title={p.name}
+                                    title={(lang === 'en' ? p.name : (p as any)[`name_${lang}`] || p.name)}
                                     slug={p.slug}
                                     price={Number(p.price)}
                                     image={p.images?.[0] || "/window.svg"}

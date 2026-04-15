@@ -142,7 +142,7 @@
         "items": "produkty",
         "shipping": "Wysyłka",
         "complimentary": "Bezpłatna",
-        "calculated_at_checkout": "Obliczane przy kasie",
+        "calculated_at_checkout": "Przy kasie",
         "proceed_to_checkout": "Przejdź do kasy",
         "continue_shopping": "Kontynuuj zakupy",
         "shipping_promo": "Dodaj jeszcze ${amount}, aby otrzymać bezpłatną wysyłkę"

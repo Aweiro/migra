@@ -146,9 +146,9 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
                                                     </span>
                                                 )}
                                             </div>
-                                            {product.label && (
+                                            {(product as any).label && (
                                                 <div className="text-[8px] text-orange-500 dark:text-orange-400 mt-1 font-black uppercase tracking-widest">
-                                                    [{product.label.toUpperCase()}]
+                                                    [{(product as any).label.toUpperCase()}]
                                                 </div>
                                             )}
                                         </td>
@@ -164,7 +164,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
                                             <div className="flex items-center justify-end gap-3">
                                                 <ProductStatusToggle
                                                     productId={product.id}
-                                                    initialStatus={product.isActive}
+                                                    initialStatus={(product as any).isActive}
                                                 />
                                                 <Link
                                                     href={`/admin/products/${product.id}/edit`}
@@ -197,9 +197,9 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
                                             <div className="text-[13px] font-black uppercase tracking-tight text-black dark:text-white truncate">
                                                 {product.name}
                                             </div>
-                                            {product.label && (
+                                            {(product as any).label && (
                                                 <span className="text-[7px] text-orange-500 dark:text-orange-400 font-black uppercase tracking-widest">
-                                                    [{product.label}]
+                                                    [{(product as any).label}]
                                                 </span>
                                             )}
                                         </div>
@@ -209,7 +209,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
                                         <div className="flex flex-col gap-2 mt-4">
                                             <ProductStatusToggle
                                                 productId={product.id}
-                                                initialStatus={product.isActive}
+                                                initialStatus={(product as any).isActive}
                                             />
                                             <Link
                                                 href={`/admin/products/${product.id}/edit`}

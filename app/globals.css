@@ -96,3 +96,33 @@ body.switching-language #global-nav-loader {
 #nprogress .peg {
   box-shadow: 0 0 10px #000, 0 0 5px #000 !important;
 }
+
+/* Admin Specific Loader UI */
+body.is-admin #global-nav-loader {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+body.is-admin #nprogress .bar {
+  background: #fff !important;
+}
+
+body.is-admin #nprogress .peg {
+  box-shadow: 0 0 10px #fff, 0 0 5px #fff !important;
+}
+
+.navigation-loader-bar {
+  background-color: black;
+}
+
+.navigation-loader-text {
+  color: black;
+}
+
+body.is-admin .navigation-loader-bar {
+  background-color: white !important;
+}
+
+body.is-admin .navigation-loader-text {
+  color: white !important;
+}

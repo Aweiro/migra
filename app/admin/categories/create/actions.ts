@@ -20,6 +20,9 @@ export async function createCategory(formData: FormData) {
         await prisma.category.create({
             data: {
                 name,
+                name_uk: (formData.get("name_uk") as string) || null,
+                name_ru: (formData.get("name_ru") as string) || null,
+                name_pl: (formData.get("name_pl") as string) || null,
                 slug,
                 image: imageUrl,
             },
@@ -48,6 +51,9 @@ export async function createSubcategory(formData: FormData) {
         await prisma.subcategory.create({
             data: {
                 name,
+                name_uk: (formData.get("name_uk") as string) || null,
+                name_ru: (formData.get("name_ru") as string) || null,
+                name_pl: (formData.get("name_pl") as string) || null,
                 slug,
                 categoryId,
             },
@@ -70,7 +76,13 @@ export async function updateCategory(id: string, formData: FormData) {
 
         if (!name || !slug) throw new Error("Name and Slug are required.");
 
-        let dataToUpdate: any = { name, slug };
+        let dataToUpdate: any = {
+            name,
+            name_uk: (formData.get("name_uk") as string) || null,
+            name_ru: (formData.get("name_ru") as string) || null,
+            name_pl: (formData.get("name_pl") as string) || null,
+            slug
+        };
 
         if (imageFile && imageFile.size > 0) {
             const imageUrl = await uploadImage(imageFile);
@@ -108,6 +120,9 @@ export async function updateSubcategory(id: string, formData: FormData) {
             where: { id },
             data: {
                 name,
+                name_uk: (formData.get("name_uk") as string) || null,
+                name_ru: (formData.get("name_ru") as string) || null,
+                name_pl: (formData.get("name_pl") as string) || null,
                 slug,
                 categoryId,
             },

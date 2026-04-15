@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,11 @@ export default function AdminLayout({
 }) {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        document.body.classList.add("is-admin");
+        return () => document.body.classList.remove("is-admin");
+    }, []);
 
     const menuItems = [
         {

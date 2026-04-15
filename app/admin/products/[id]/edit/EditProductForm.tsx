@@ -61,11 +61,71 @@ export default function EditProductForm({
         { value: "SALE", label: "SALE_REDUCTION" },
     ];
 
+    const [activeTab, setActiveTab] = useState<string>("en");
+    const [names, setNames] = useState<Record<string, string>>({
+        en: product.name || "",
+        uk: product.name_uk || "",
+        ru: product.name_ru || "",
+        pl: product.name_pl || "",
+    });
+    const [descriptions, setDescriptions] = useState<Record<string, string>>({
+        en: product.description || "",
+        uk: product.description_uk || "",
+        ru: product.description_ru || "",
+        pl: product.description_pl || "",
+    });
+    const [isTranslating, setIsTranslating] = useState(false);
+
+    const handleNameChange = (lang: string, value: string) => {
+        setNames(prev => ({ ...prev, [lang]: value }));
+    };
+
+    const handleDescriptionChange = (lang: string, value: string) => {
+        setDescriptions(prev => ({ ...prev, [lang]: value }));
+    };
+
+    const handleAiTranslate = async () => {
+        if (!names.en) {
+            alert("Input_Primary_Source_First");
+            return;
+        }
+        setIsTranslating(true);
+        // Mocking AI translation delay
+        await new Promise(r => setTimeout(r, 1200));
+
+        setNames({
+            en: names.en,
+            uk: names.en,
+            ru: names.en,
+            pl: names.en,
+        });
+
+        setDescriptions({
+            en: descriptions.en,
+            uk: descriptions.en,
+            ru: descriptions.en,
+            pl: descriptions.en,
+        });
+
+        setIsTranslating(false);
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
+        // Add manual values from state
+        formData.set("name", names.en);
+        formData.set("name_uk", names.uk);
+        formData.set("name_ru", names.ru);
+        formData.set("name_pl", names.pl);
+
+        formData.set("description", descriptions.en);
+        formData.set("description_uk", descriptions.uk);
+        formData.set("description_ru", descriptions.ru);
+        formData.set("description_pl", descriptions.pl);
+
         // Manual append for custom selects
         formData.set("subcategoryId", selectedSubcategoryId);
         formData.set("label", selectedLabel);
@@ -101,6 +161,13 @@ export default function EditProductForm({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const languages = [
+        { id: "en", label: "EN" },
+        { id: "uk", label: "UA" },
+        { id: "ru", label: "RU" },
+        { id: "pl", label: "PL" },
+    ];
+
     return (
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto py-12 px-6 overflow-x-hidden">
             <div className="mb-8 md:mb-16 space-y-3 md:space-y-4">
@@ -117,18 +184,62 @@ export default function EditProductForm({
                 <div className="space-y-12">
                     {/* Identification */}
                     <div className="space-y-6">
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">01 // Primary Identification</span>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Product Name</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    defaultValue={product.name}
-                                    required
-                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
-                                />
-                            </div>
+                        <div className="flex items-end justify-between">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">01 // Primary Identification</span>
+                            <button
+                                type="button"
+                                onClick={handleAiTranslate}
+                                disabled={isTranslating || !names.en}
+                                className="flex items-center gap-2 group disabled:opacity-30"
+                            >
+                                <div className="w-2 h-2 bg-black dark:bg-white animate-pulse" />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] border-b border-black/20 group-hover:border-black transition-all">
+                                    {isTranslating ? "Processing_Translations..." : "Magic_AI_Sync"}
+                                </span>
+                            </button>
+                        </div>
+
+                        {/* Tab Switcher */}
+                        <div className="flex gap-2 border-b border-black/[0.03] dark:border-white/[0.03] pb-1">
+                            {languages.map(lang => (
+                                <button
+                                    key={lang.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(lang.id)}
+                                    className={`px-4 py-2 text-[9px] font-black tracking-widest transition-all ${activeTab === lang.id ? "text-black dark:text-white border-b-2 border-black dark:border-white" : "text-black/20 dark:text-white/20 hover:text-black/40"}`}
+                                >
+                                    {lang.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4 pt-2">
+                            {languages.map(lang => (
+                                <div key={lang.id} className={activeTab === lang.id ? "block space-y-4 animate-in fade-in duration-500" : "hidden"}>
+                                    <div>
+                                        <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Product Name ({lang.label})</label>
+                                        <input
+                                            type="text"
+                                            value={names[lang.id]}
+                                            onChange={(e) => handleNameChange(lang.id, e.target.value)}
+                                            required={lang.id === "en"}
+                                            className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
+                                            placeholder={lang.id === "en" ? "ARCHIVAL_PIECE_v1" : `TRANS_LOCAL_${lang.label}`}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Documentation ({lang.label})</label>
+                                        <textarea
+                                            value={descriptions[lang.id]}
+                                            onChange={(e) => handleDescriptionChange(lang.id, e.target.value)}
+                                            rows={4}
+                                            className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold tracking-widest outline-none focus:border-black dark:focus:border-white transition-all resize-none"
+                                            placeholder={`Input localized description for ${lang.label}...`}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
                             <div>
                                 <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Slug_Identifier</label>
                                 <input
@@ -137,15 +248,6 @@ export default function EditProductForm({
                                     defaultValue={product.slug}
                                     required
                                     className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-mono font-bold tracking-tighter outline-none focus:border-black dark:focus:border-white transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Documentation</label>
-                                <textarea
-                                    name="description"
-                                    defaultValue={product.description || ""}
-                                    rows={4}
-                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -240,7 +342,7 @@ export default function EditProductForm({
                                     }}
                                     onFocus={() => setOpenDropdown("brand")}
                                     placeholder="MIGRA_CORE / ARCHIVE"
-                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none"
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black tracking-widest outline-none"
                                 />
                                 {openDropdown === "brand" && (
                                     <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
@@ -253,7 +355,7 @@ export default function EditProductForm({
                                                 [+] Add_New: {brandQuery.toUpperCase()}
                                             </button>
                                         )}
-                                        {brands.filter(b => b.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
+                                        {brands.filter(b => b.trim() !== "" && b.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
                                             <button
                                                 key={b}
                                                 type="button"

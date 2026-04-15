@@ -9,6 +9,9 @@ import { getServerTranslation } from "@/lib/i18n/server";
 interface Product {
     id: string;
     name: string;
+    name_uk?: string;
+    name_ru?: string;
+    name_pl?: string;
     slug: string;
     price: number | string;
     discountAmount?: number | string;
@@ -16,6 +19,7 @@ interface Product {
     sizes: string[];
     brand?: string;
     label?: string;
+    [key: string]: any;
 }
 
 export async function Storefront({
@@ -29,7 +33,7 @@ export async function Storefront({
     searchParams?: { [key: string]: string | string[] | undefined };
     hideHero?: boolean;
 }) {
-    const { t } = await getServerTranslation();
+    const { t, lang } = await getServerTranslation();
     const whereClause: any = { isActive: true };
 
     if (subcategorySlug) {
@@ -118,10 +122,14 @@ export async function Storefront({
         categoryData = JSON.parse(JSON.stringify(rawCat));
     }
 
-    const currentTitle = subcategoryData?.name || categoryData?.name || t('common.selection');
+    const currentTitle = (lang === 'en' ? (subcategoryData?.name || categoryData?.name) : (subcategoryData?.[`name_${lang}`] || categoryData?.[`name_${lang}`] || subcategoryData?.name || categoryData?.name)) || t('common.selection');
+
+    const catName = (lang === 'en' ? subcategoryData?.category?.name : subcategoryData?.category?.[`name_${lang}`] || subcategoryData?.category?.name);
+    const subName = (lang === 'en' ? subcategoryData?.name : subcategoryData?.[`name_${lang}`] || subcategoryData?.name);
+
     const currentBreadcrumb = subcategoryData
-        ? `${subcategoryData.category.name} / ${subcategoryData.name}`
-        : categoryData?.name;
+        ? `${catName} / ${subName}`
+        : (lang === 'en' ? categoryData?.name : categoryData?.[`name_${lang}`] || categoryData?.name);
 
     const categories = (!categorySlug && !subcategorySlug)
         ? await prisma.category.findMany({
@@ -293,7 +301,7 @@ export async function Storefront({
                                 <div className="absolute inset-0 p-10 flex flex-col justify-between">
                                     <span className="text-[10px] text-white/60 font-medium tracking-[0.3em] uppercase opacity-0 group-hover:opacity-100 transition-opacity">{t('common.browse_store')}</span>
                                     <h4 className="text-white text-3xl font-black uppercase tracking-widest drop-shadow-lg">
-                                        {cat.name}
+                                        {(lang === 'en' ? cat.name : cat[`name_${lang}`] || cat.name)}
                                     </h4>
                                 </div>
                             </Link>
@@ -368,7 +376,7 @@ export async function Storefront({
                             <ProductCard
                                 key={product.id}
                                 id={product.id}
-                                title={product.name}
+                                title={(lang === 'en' ? product.name : product[`name_${lang}`] || product.name)}
                                 slug={product.slug}
                                 price={Number(product.price)}
                                 image={product.images?.[0] || "/window.svg"}
@@ -417,7 +425,7 @@ export async function Storefront({
                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
                             <div className="space-y-2">
                                 <span className="text-[10px] uppercase tracking-[0.5em] font-bold text-black/60">{t('common.selection')}</span>
-                                <h3 className="text-4xl font-black uppercase tracking-tighter text-black">{t('common.most_wanted')}</h3>
+                                <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-black">{t('common.most_wanted')}</h3>
                             </div>
                             <Link href="/shop" className="text-[11px] uppercase tracking-[0.3em] font-black border-b-2 border-black pb-1 hover:text-black/50 transition-colors text-black self-start md:self-auto">
                                 {t('common.view_entire_archive')}
@@ -428,7 +436,7 @@ export async function Storefront({
                                 <ProductCard
                                     key={`popular-${product.id}`}
                                     id={product.id}
-                                    title={product.name}
+                                    title={(lang === 'en' ? product.name : product[`name_${lang}`] || product.name)}
                                     slug={product.slug}
                                     price={Number(product.price)}
                                     image={product.images?.[0] || "/window.svg"}

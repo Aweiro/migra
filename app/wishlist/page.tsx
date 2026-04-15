@@ -45,7 +45,7 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
     };
 
     return (
-        <div className="group space-y-4">
+        <div className="group flex flex-col h-full">
             <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden">
                 <Link href={`/product/${item.slug}`}>
                     <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden">
@@ -123,12 +123,12 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                     </svg>
                 </button>
             </div>
-            <div className="space-y-3">
-                <div className="space-y-2">
+            <div className="flex flex-col flex-1 pt-4">
+                <div className="flex-1 space-y-2">
                     <Link href={`/product/${item.slug}`} className="hover:text-black/50 transition-colors">
                         <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-black leading-tight truncate">{item.title}</h2>
                     </Link>
-                    <div className="space-y-2.5">
+                    <div className="space-y-4">
                         <p className="text-[10px] tracking-widest font-bold text-black/40">${item.price.toFixed(2)}</p>
 
                         {/* Size Picker - Always Visible */}
@@ -152,12 +152,14 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                         )}
                     </div>
                 </div>
-                <button
-                    onClick={handleAddToCart}
-                    className="w-full border border-black/10 py-2.5 text-[9px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all duration-300"
-                >
-                    {isAdded ? t('common.added') : (item.sizes && item.sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
-                </button>
+                <div className="mt-6">
+                    <button
+                        onClick={handleAddToCart}
+                        className="w-full border border-black/10 py-2.5 text-[9px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all duration-300"
+                    >
+                        {isAdded ? t('common.added') : (item.sizes && item.sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -20,7 +20,7 @@ export default async function CreateCategoryPage() {
             <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
             <div className="absolute top-20 -left-20 w-72 h-72 bg-teal-500/10 blur-3xl rounded-full pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
 
-            <div className="relative z-10 max-w-4xl">
+            <div className="relative z-10 max-w-4xl mx-auto">
                 <div className="mb-8">
                     <Link
                         href="/admin/categories"

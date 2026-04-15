@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCartStore } from "@/lib/stores/cart.store";
@@ -13,11 +13,20 @@ type Category = { id: string; name: string; slug: string; subcategories: Subcate
 export function HeaderClient({ categories }: { categories: Category[] }) {
     const { language, setLanguage, t } = useLanguage();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
     const cartCount = useCartStore((state) => state.items.reduce((a, b) => a + b.quantity, 0));
     const wishlistCount = useWishlistStore((state) => state.items.length);
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     if (pathname?.startsWith("/admin")) return null;
+
+    // Use effective counts after hydration to avoid flashes and mismatches
+    const effectiveCartCount = mounted ? cartCount : 0;
+    const effectiveWishlistCount = mounted ? wishlistCount : 0;
 
     return (
         <>
@@ -102,10 +111,10 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                 <div className="absolute top-full right-0 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[10001]">
                                     <div className="bg-white border border-black/5 shadow-[0_20px_40px_rgba(0,0,0,0.08)] py-1 min-w-[100px]">
                                         {[
-                                            { id: 'en', label: 'English' },
-                                            { id: 'uk', label: 'Українська' },
-                                            { id: 'ru', label: 'Русский' },
-                                            { id: 'pl', label: 'Polski' }
+                                            { id: 'en', label: 'EN' },
+                                            { id: 'uk', label: 'UA' },
+                                            { id: 'ru', label: 'RU' },
+                                            { id: 'pl', label: 'PL' }
                                         ].map((lang) => (
                                             <button
                                                 key={lang.id}
@@ -123,8 +132,8 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                 <svg className="w-5 h-5 md:w-[18px] md:h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.18L12 21z" />
                                 </svg>
-                                {wishlistCount > 0 && (
-                                    <span className="absolute top-1 right-1 text-[7px] font-bold text-black/60 uppercase tracking-tighter">{wishlistCount}</span>
+                                {effectiveWishlistCount > 0 && (
+                                    <span className="absolute top-1 right-1 text-[7px] font-bold text-black/60 uppercase tracking-tighter">{effectiveWishlistCount}</span>
                                 )}
                             </Link>
 
@@ -132,8 +141,8 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                 <svg className="w-5 h-5 md:w-[18px] md:h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
-                                {cartCount > 0 && (
-                                    <span className="absolute top-1 right-1 text-[8px] bg-black text-white w-3.5 h-3.5 flex items-center justify-center font-bold">{cartCount}</span>
+                                {effectiveCartCount > 0 && (
+                                    <span className="absolute top-1 right-1 text-[8px] bg-black text-white w-3.5 h-3.5 flex items-center justify-center font-bold">{effectiveCartCount}</span>
                                 )}
                             </Link>
                         </div>
@@ -174,7 +183,7 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                             </span>
                             <div className="grid grid-cols-4 gap-4">
                                 {[
-                                    { id: 'en', label: 'English' },
+                                    { id: 'en', label: 'EN' },
                                     { id: 'uk', label: 'UA' },
                                     { id: 'ru', label: 'RU' },
                                     { id: 'pl', label: 'PL' }

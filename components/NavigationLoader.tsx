@@ -12,12 +12,11 @@ export function NavigationLoader() {
                 {bars.map((_, i) => (
                     <motion.div
                         key={i}
-                        className="w-[2px] h-8 bg-black"
+                        className="w-[2px] h-8 bg-black dark:bg-white navigation-loader-bar"
                         initial={{ opacity: 0.1, scaleY: 0.8 }}
                         animate={{
                             opacity: [0.1, 1, 0.1],
-                            scaleY: [0.8, 1.2, 0.8],
-                            backgroundColor: ["#000", "#000", "#000"]
+                            scaleY: [0.8, 1.2, 0.8]
                         }}
                         transition={{
                             duration: 1,
@@ -38,7 +37,7 @@ export function NavigationLoader() {
                 {["M", "I", "G", "R", "A"].map((char, i) => (
                     <span
                         key={i}
-                        className="text-[14px] font-black tracking-[0.5em] text-black"
+                        className="text-[14px] font-black tracking-[0.5em] text-black dark:text-white navigation-loader-text"
                     >
                         {char}
                     </span>
