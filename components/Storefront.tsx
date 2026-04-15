@@ -10,10 +10,11 @@ interface Product {
     name: string;
     slug: string;
     price: number | string;
-    discountPercent?: number | string;
+    discountAmount?: number | string;
     images: string[];
     sizes: string[];
     brand?: string;
+    label?: string;
 }
 
 export async function Storefront({
@@ -27,7 +28,7 @@ export async function Storefront({
     searchParams?: { [key: string]: string | string[] | undefined };
     hideHero?: boolean;
 }) {
-    const whereClause: any = {};
+    const whereClause: any = { isActive: true };
 
     if (subcategorySlug) {
         whereClause.subcategory = { slug: subcategorySlug };
@@ -71,7 +72,7 @@ export async function Storefront({
     const products: Product[] = JSON.parse(JSON.stringify(rawProducts));
 
     // Get all sizes available for this category context (ignoring size filter)
-    const baseWhereClause: any = {};
+    const baseWhereClause: any = { isActive: true };
     if (subcategorySlug) {
         baseWhereClause.subcategory = { slug: subcategorySlug };
     } else if (categorySlug) {
@@ -259,7 +260,7 @@ export async function Storefront({
             {/* Departments Section */}
             {!hideHero && !categorySlug && !subcategorySlug && categories.length > 0 && (
                 <div className="mx-auto max-w-[1800px] px-6 mb-6">
-                    <div className="flex items-end justify-between mb-16 border-b border-black pb-4">
+                    <div className="flex items-end justify-between mb-8 md:mb-16 border-b border-black pb-4">
                         <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black">
                             Explore Departments
                         </h3>
@@ -294,9 +295,9 @@ export async function Storefront({
 
             {/* Brand Philosophy Section (Inverse Hover: Color by default, BW on hover) */}
             {!hideHero && !categorySlug && !subcategorySlug && (
-                <div className="bg-white py-24 md:py-32 mb-6 border-y border-black/5 relative z-20">
+                <div className="bg-white pt-10 pb-0 md:py-16 mb-6 border-y border-black/5 relative z-20">
                     <div className="mx-auto max-w-[1800px] px-6">
-                        <div className="flex flex-col md:flex-row gap-16 items-center">
+                        <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
                             <div className="flex-1 relative order-2 md:order-1">
                                 <div className="relative aspect-square w-full max-w-sm mx-auto group overflow-hidden shadow-2xl">
                                     <Image
@@ -338,8 +339,8 @@ export async function Storefront({
             )}
 
             {/* Product Grid (Moved Up) */}
-            <div className="mx-auto max-w-[1800px] px-6 pb-24">
-                <div className="flex items-end justify-between mb-16 border-b border-black pb-4">
+            <div className="mx-auto max-w-[1800px] px-6 pb-12 md:pb-24">
+                <div className="flex items-end justify-between mb-8 md:mb-16 border-b border-black pb-4">
                     <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black">
                         {products.length > 0 ? (categorySlug ? "Department Selection" : "Current Collection") : "End of Library"}
                     </h3>
@@ -362,8 +363,11 @@ export async function Storefront({
                                 slug={product.slug}
                                 price={Number(product.price)}
                                 image={product.images?.[0] || "/window.svg"}
-                                discountPercent={Number(product.discountPercent)}
+                                hoverImage={product.images?.[1]}
+                                allImages={product.images}
+                                discountAmount={Number(product.discountAmount)}
                                 sizes={product.sizes}
+                                label={product.label as any}
                             />
                         ))}
                     </div>
@@ -372,13 +376,13 @@ export async function Storefront({
 
             {/* Features Banner */}
             {!hideHero && !categorySlug && !subcategorySlug && (
-                <div className="bg-black text-white py-32 overflow-hidden relative border-y border-white/5">
+                <div className="bg-black text-white md:py-32 py-12 overflow-hidden relative border-y border-white/5">
                     <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] select-none pointer-events-none">
                         <span className="text-[40vw] font-black uppercase tracking-tighter leading-none italic">MIGRA</span>
                     </div>
 
                     <div className="mx-auto max-w-[1800px] px-6 relative z-10 text-center">
-                        <h3 className="text-4xl md:text-[5vw] font-black uppercase tracking-tighter mb-24 max-w-5xl mx-auto leading-[0.85]">
+                        <h3 className="text-4xl md:text-[5vw] font-black uppercase tracking-tighter md:mb-24 mb-12 max-w-5xl mx-auto leading-[0.85]">
                             Technical Integrity <br /><span className="text-white/30 italic">Crafted Beyond Seasonal Limits</span>
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-4 lg:gap-16">
@@ -399,7 +403,7 @@ export async function Storefront({
 
             {/* Popular Products Section (Fixed Visibility) */}
             {!hideHero && !categorySlug && !subcategorySlug && popularProducts.length > 0 && (
-                <div className="py-16 border-t border-black/5">
+                <div className="md:py-16 py-8 border-t border-black/5">
                     <div className="mx-auto max-w-[1800px] px-6">
                         <div className="flex items-center justify-between mb-10">
                             <div className="space-y-2">
@@ -419,8 +423,11 @@ export async function Storefront({
                                     slug={product.slug}
                                     price={Number(product.price)}
                                     image={product.images?.[0] || "/window.svg"}
-                                    discountPercent={Number(product.discountPercent)}
+                                    hoverImage={product.images?.[1]}
+                                    allImages={product.images}
+                                    discountAmount={Number(product.discountAmount)}
                                     sizes={product.sizes}
+                                    label={product.label as any}
                                 />
                             ))}
                         </div>

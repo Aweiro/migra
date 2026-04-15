@@ -17,8 +17,8 @@ export default function CartPage() {
 
   return (
     <main className="flex-1 flex flex-col min-h-screen justify-between bg-white pt-6 border-t border-black/[0.03]">
-      <div className="mx-auto w-full max-w-[1500px] px-6 mb-16">
-        <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-12">
+      <div className="mx-auto w-full max-w-[1500px] px-6 mb-8 md:mb-16">
+        <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-6 md:mb-12">
           <div className="flex items-center gap-6">
             <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-black/30">
               <Link href="/" className="hover:text-black transition-colors">Home</Link>
@@ -51,34 +51,56 @@ export default function CartPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12">
             {/* Items */}
             <div className="space-y-0">
-              <div className="hidden md:grid grid-cols-[1fr_120px_100px_80px] gap-8 pb-4 border-b border-black/[0.07] mb-0">
-                <span className="text-[9px] uppercase tracking-[0.4em] font-black text-black/30">Item</span>
-                <span className="text-[9px] uppercase tracking-[0.4em] font-black text-black/30 text-center">Qty</span>
-                <span className="text-[9px] uppercase tracking-[0.4em] font-black text-black/30 text-right">Price</span>
-                <span></span>
+              <div className="flex items-center justify-between md:grid md:grid-cols-[1fr_120px_100px_80px] md:gap-8 pb-4 border-b border-black/[0.1] mb-6 md:mb-0">
+                <span className="text-[10px] md:text-[9px] uppercase tracking-[0.4em] font-black text-black md:text-black/30">Archive Selection</span>
+                <span className="hidden md:block text-[9px] uppercase tracking-[0.4em] font-black text-black/30 text-center">Qty</span>
+                <span className="hidden md:block text-[9px] uppercase tracking-[0.4em] font-black text-black/30 text-right">Price</span>
+                <div className="flex justify-end">
+                  <button
+                    onClick={clearCart}
+                    className="text-[9px] uppercase tracking-[0.3em] font-bold text-black/30 hover:text-black transition-colors border-b border-black/10 hover:border-black pb-0.5"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
               {items.map((item, i) => (
-                <div key={item.id} className={`grid grid-cols-1 md:grid-cols-[1fr_120px_100px_80px] gap-6 md:gap-8 py-8 items-center ${i < items.length - 1 ? "border-b border-black/[0.05]" : ""}`}>
-                  {/* Product info */}
-                  <div className="flex items-center gap-5">
-                    <div className="relative w-20 h-20 flex-shrink-0 bg-[#f9f9f9] overflow-hidden">
-                      {item.image ? (
-                        <Image src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[8px] uppercase tracking-widest text-black/20 font-bold">No Image</div>
-                      )}
+                <div key={item.id} className={`flex flex-col md:grid md:grid-cols-[1fr_120px_100px_80px] gap-6 md:gap-8 p-5 mb-6 md:p-0 md:mb-0 md:py-8 items-center border border-black/[0.07] md:border-0 md:border-b md:border-black/[0.05] last:mb-0 md:last:border-0`}>
+                  {/* TOP: Product info + Quantity (Mobile) */}
+                  <div className="flex items-center justify-between w-full md:w-auto gap-5 flex-1">
+                    <div className="flex items-center gap-5">
+                      <div className="relative w-24 h-24 md:w-20 md:h-20 flex-shrink-0 bg-[#f9f9f9] overflow-hidden">
+                        {item.image ? (
+                          <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 96px, 80px" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[8px] uppercase tracking-widest text-black/20 font-bold">No Image</div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <h2 className="text-[9.5px] md:text-[11px] uppercase tracking-[0.2em] font-black text-black leading-tight">{item.title}</h2>
+                        <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold text-black/30">€{item.price.toFixed(2)}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <h2 className="text-[11px] uppercase tracking-[0.2em] font-black text-black leading-tight">{item.title}</h2>
-                      <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-black/30">€{item.price.toFixed(2)}</p>
+
+                    {/* Quantity controls on the right for mobile */}
+                    <div className="flex md:hidden items-center justify-between border border-black/10 flex-shrink-0 h-9">
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-9 h-full flex items-center justify-center text-black/40 hover:text-black text-lg"
+                      >−</button>
+                      <span className="w-8 text-center text-[11px] font-black text-black">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-9 h-full flex items-center justify-center text-black/40 hover:text-black text-lg"
+                      >+</button>
                     </div>
                   </div>
 
-                  {/* Quantity */}
-                  <div className="flex items-center justify-between border border-black/10">
+                  {/* Quantity (Desktop Only) */}
+                  <div className="hidden md:flex items-center justify-between border border-black/10">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="w-9 h-9 flex items-center justify-center text-black/40 hover:text-black text-lg transition-colors"
@@ -90,29 +112,25 @@ export default function CartPage() {
                     >+</button>
                   </div>
 
-                  {/* Line total */}
-                  <span className="text-[11px] font-black tracking-widest text-right text-black">
-                    €{(item.price * item.quantity).toFixed(2)}
-                  </span>
+                  {/* BOTTOM/GRID: Price and Remove (Mobile - side by side) */}
+                  <div className="flex items-center justify-between w-full md:contents mt-2 md:mt-0 pt-4 md:pt-0 border-t border-black/[0.03] md:border-0">
+                    <div className="flex flex-col md:block md:text-right">
+                      <span className="md:hidden text-[9px] uppercase tracking-[0.3em] font-bold text-black/20 mb-1">Total</span>
+                      <span className="text-[11px] font-black tracking-widest text-black">
+                        €{(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
 
-                  {/* Remove */}
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-[9px] uppercase tracking-[0.3em] font-bold text-black/30 hover:text-black transition-colors text-right md:text-left"
-                  >
-                    Remove
-                  </button>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-[9px] uppercase tracking-[0.4em] font-black text-black/30 hover:text-black transition-colors md:text-left"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
 
-              <div className="pt-6 flex justify-end">
-                <button
-                  onClick={clearCart}
-                  className="text-[9px] uppercase tracking-[0.3em] font-bold text-black/30 hover:text-black transition-colors border-b border-black/20 hover:border-black pb-0.5"
-                >
-                  Clear Cart
-                </button>
-              </div>
             </div>
 
             {/* Summary */}

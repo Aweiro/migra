@@ -15,10 +15,13 @@ type ProductCardProps = {
   description?: string;
   price: number;
   image: string | StaticImageData;
-  discountPercent?: number;
+  hoverImage?: string | StaticImageData;
+  allImages?: string[];
+  discountAmount?: number;
   currency?: string;
   className?: string;
   sizes?: string[];
+  label?: 'BESTSELLER' | 'NEW' | 'SALE' | null;
 };
 
 const formatPrice = (price: number, currency: string) =>
@@ -34,23 +37,35 @@ export function ProductCard({
   slug,
   price,
   image,
-  discountPercent = 0,
+  hoverImage,
+  allImages = [],
+  discountAmount = 0,
   currency = "USD",
   className = "",
   sizes = [],
+  label,
 }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
+  const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const router = useRouter();
+
+  // Combine images for mobile carousel
+  const carouselImages = allImages.length > 0
+    ? allImages
+    : [image, hoverImage].filter(Boolean) as (string | StaticImageData)[];
 
   const addToCart = useCartStore((state) => state.addToCart);
   const addToWishlist = useWishlistStore((state) => state.addToWishlist);
   const removeFromWishlist = useWishlistStore((state) => state.removeFromWishlist);
   const isWishlisted = useWishlistStore((state) => state.isWishlisted(id));
 
-  const hasDiscount = discountPercent > 0;
-  const originalPrice = hasDiscount ? price / (1 - discountPercent / 100) : price;
+  const hasDiscount = discountAmount > 0;
+  const originalPrice = price;
+  const finalPrice = Math.max(0, price - discountAmount);
+  // Calculate percentage dynamically for display
+  const discountPercent = hasDiscount ? Math.round((discountAmount / price) * 100) : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,8 +82,8 @@ export function ProductCard({
       baseId: id,
       size: selectedSize || undefined,
       title: selectedSize ? `${title} / ${selectedSize}` : title,
-      price,
-      image: typeof image === "string" ? image : undefined,
+      price: finalPrice,
+      image: typeof carouselImages[0] === "string" ? carouselImages[0] : undefined,
     });
 
     setIsAdded(true);
@@ -85,25 +100,78 @@ export function ProductCard({
       addToWishlist({
         id,
         title,
-        price,
-        image: typeof image === "string" ? image : undefined,
+        price: finalPrice,
+        image: typeof carouselImages[0] === "string" ? (carouselImages[0] as string) : undefined,
+        hoverImage: typeof carouselImages[1] === "string" ? (carouselImages[1] as string) : undefined,
+        allImages: carouselImages.every(img => typeof img === 'string') ? carouselImages as string[] : undefined,
         slug: slug ?? "",
         sizes,
       });
     }
   };
 
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImgIdx((prev) => (prev + 1) % carouselImages.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImgIdx((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
   const cardContent = (
     <>
       {/* Image Container */}
       <div className="relative aspect-[3/4] w-full bg-[#f9f9f9] overflow-hidden p-8">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 320px"
-          className="object-contain transition-opacity duration-500 group-hover:opacity-90 p-4"
-        />
+
+        {/* Desktop View: Smooth Hover */}
+        <div className="hidden md:block absolute inset-0 p-8">
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 320px"
+            className={`object-contain transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${hoverImage ? "group-hover:opacity-0 group-hover:scale-105 group-hover:-translate-x-3 group-hover:blur-sm" : "group-hover:opacity-90"}`}
+          />
+          {hoverImage && (
+            <Image
+              src={hoverImage}
+              alt={`${title} - alternative view`}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 320px"
+              className="object-contain opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] scale-110 group-hover:scale-100 translate-x-3 group-hover:translate-x-0 p-4"
+            />
+          )}
+        </div>
+
+        {/* Mobile View: Carousel with Arrows */}
+        <div className="md:hidden absolute inset-0 p-8">
+          {carouselImages.map((img, idx) => (
+            <Image
+              key={idx}
+              src={img}
+              alt={`${title} - view ${idx + 1}`}
+              fill
+              sizes="100vw"
+              className={`object-contain transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${idx === currentImgIdx ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[15%]"}`}
+            />
+          ))}
+
+          {/* Arrows for Mobile */}
+          {carouselImages.length > 1 && (
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-0 z-20">
+              <button onClick={prevImage} className="w-7 h-7 flex items-center justify-center bg-white/25 backdrop-blur-[1px] text-black/45 active:text-black transition-all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <button onClick={nextImage} className="w-7 h-7 flex items-center justify-center bg-white/25 backdrop-blur-[1px] text-black/45 active:text-black transition-all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Wishlist Button — always visible */}
         <button
@@ -125,6 +193,17 @@ export function ProductCard({
           </svg>
         </button>
 
+        {label && (
+          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 items-start">
+            <span className={`text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] px-2 py-1 md:px-2.5 md:py-1.5 shadow-2xl backdrop-blur-md ${label === 'BESTSELLER' ? 'bg-black text-white' :
+              label === 'NEW' ? 'bg-white text-black border border-black/20' :
+                'bg-zinc-100 text-black border border-black/5'
+              }`}>
+              {label === 'BESTSELLER' ? 'Hit' : label === 'NEW' ? 'New' : 'Sale'}
+            </span>
+          </div>
+        )}
+
         {hasDiscount && (
           <span className="absolute bottom-4 left-4 bg-black text-white text-[10px] uppercase font-bold px-2 py-1 tracking-tighter">
             -{discountPercent}%
@@ -141,7 +220,7 @@ export function ProductCard({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-3">
           <div className="flex items-center space-x-2">
             <span className="text-[12px] font-bold text-black">
-              {formatPrice(price, currency)}
+              {formatPrice(finalPrice, currency)}
             </span>
             {hasDiscount && (
               <span className="text-[11px] text-black/30 line-through">

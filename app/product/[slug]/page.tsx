@@ -39,9 +39,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     const product = rawProduct as typeof rawProduct & { sizes: string[]; isCustomOrder: boolean };
 
     const price = Number(product.price);
-    const discountPercent = Number(product.discountPercent);
-    const hasDiscount = discountPercent > 0;
-    const discountedPrice = hasDiscount ? price * (1 - discountPercent / 100) : price;
+    const discountAmount = Number(product.discountAmount);
+    const hasDiscount = discountAmount > 0;
+    const discountedPrice = Math.max(0, price - discountAmount);
+    // discountPercent calculated on-the-fly in display logic below if needed
+    const discountPercent = hasDiscount ? Math.round((discountAmount / price) * 100) : 0;
 
     // Fetch related products (same subcategory)
     const relatedProducts = await prisma.product.findMany({
@@ -95,7 +97,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="flex flex-col lg:flex-row gap-12 xl:gap-18">
                     {/* Left: Gallery */}
                     <div className="w-full lg:w-[55%] xl:w-[60%]">
-                        <ProductGallery images={product.images} />
+                        <ProductGallery images={product.images} label={(product as any).label} />
                     </div>
 
                     {/* Right: Info (Sticky Form) */}
@@ -110,12 +112,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
                                 <div className="flex items-baseline gap-4 text-black">
                                     <span className="text-2xl font-bold tracking-widest text-black">
-                                        €{discountedPrice.toFixed(2)}
+                                        ${discountedPrice.toFixed(2)}
                                     </span>
                                     {hasDiscount && (
                                         <>
                                             <span className="text-sm text-black/30 line-through tracking-widest">
-                                                €{price.toFixed(2)}
+                                                ${price.toFixed(2)}
                                             </span>
                                             <span className="text-[10px] uppercase tracking-widest font-bold text-red-500">
                                                 {discountPercent}% OFF
@@ -130,11 +132,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                                 product={{
                                     id: product.id,
                                     name: product.name,
-                                    price: Number(product.price),
+                                    price: discountedPrice,
                                     image: product.images?.[0],
                                     slug: product.slug,
                                     stock: product.stock,
                                     isCustomOrder: product.isCustomOrder,
+                                    label: (product as any).label,
                                 }}
                                 sizes={product.sizes}
                             />
@@ -157,13 +160,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                                 <li>High-density construction</li>
                                 <li>Manufactured ethically in Europe</li>
                                 <li>Contextual fit (True to size)</li>
-                                <li>Product Ref: {product.id.slice(-8).toUpperCase()}</li>
+                                <li>Product Ref: {product.id.slice(0, 8).toUpperCase()}</li>
                             </ul>
                         </div>
                         <div className="space-y-6">
                             <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">Shipping & Returns</h3>
                             <div className="space-y-4 text-[10px] uppercase tracking-[0.2em] text-black/50 leading-loose">
-                                <p>Complimentary express shipping on all orders over €200.</p>
+                                <p>Complimentary express shipping on all orders over $200.</p>
                                 <p>14-day archival return policy. Items must be unworn with all tags attached.</p>
                             </div>
                         </div>
@@ -185,8 +188,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                                     slug={p.slug}
                                     price={Number(p.price)}
                                     image={p.images?.[0] || "/window.svg"}
-                                    discountPercent={Number(p.discountPercent)}
+                                    hoverImage={p.images?.[1]}
+                                    allImages={p.images}
+                                    discountAmount={Number(p.discountAmount)}
                                     sizes={p.sizes}
+                                    label={(p as any).label}
                                 />
                             ))}
                         </div>

@@ -15,7 +15,10 @@ export type CreateProductInput = Omit<
 >;
 
 export async function getProducts(categoryId?: string) {
-  const where = categoryId ? { subcategory: { categoryId } } : {};
+  const where: any = { isActive: true };
+  if (categoryId) {
+    where.subcategory = { categoryId };
+  }
   return prisma.product.findMany({
     where,
     include: productInclude,

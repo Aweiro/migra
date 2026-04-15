@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { updateSubcategory } from "../../../categories/create/actions";
 import { useRouter } from "next/navigation";
 
@@ -18,109 +18,135 @@ export default function EditSubcategoryForm({ subcategory, categories }: EditSub
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    const [selectedCategoryId, setSelectedCategoryId] = useState(subcategory.categoryId);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
+        formData.set("categoryId", selectedCategoryId);
 
         try {
             const result = await updateSubcategory(subcategory.id, formData);
             if (result.success) {
-                alert("Subcategory updated successfully!");
+                alert("MODIFICATION_COMMITTED_SUCCESSFULLY");
                 router.push("/admin/categories");
                 router.refresh();
             } else {
-                alert("Error: " + result.error);
+                alert("ERROR_CODE: " + result.error);
             }
         } catch (err) {
             console.error(err);
-            alert("An unexpected error occurred");
+            alert("UNEXPECTED_SYSTEM_FAILURE");
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
-        <div className="max-w-2xl mx-auto p-6 md:p-8 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:bg-black/40">
-            <div className="mb-8">
-                <h2 className="text-3xl font-black bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
-                    Edit Subcategory
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Update the details for <strong>{subcategory.name}</strong>.
+        <div className="max-w-2xl mx-auto py-12 px-6">
+            <div className="mb-8 md:mb-12 space-y-3 md:space-y-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-1 md:w-1.5 h-6 bg-black dark:bg-white" />
+                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white leading-none">
+                        Modify_Sub_Node
+                    </h2>
+                </div>
+                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold text-black/40 dark:text-white/40">
+                    Subcategory ID: {subcategory.id.toUpperCase()} // Online
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Subcategory Name
-                    </label>
-                    <input
-                        type="text"
-                        name="name"
-                        defaultValue={subcategory.name}
-                        required
-                        onChange={(e) => {
-                            const slugInput = document.getElementById("slug-input") as HTMLInputElement;
-                            if (slugInput && !slugInput.value.trim() && e.target.value) {
-                                slugInput.value = e.target.value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
-                            }
-                        }}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-teal-500 outline-none transition-all dark:text-white"
-                    />
+            <form onSubmit={handleSubmit} className="space-y-10">
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">
+                            Sub_Node_Name
+                        </label>
+                        <input
+                            type="text"
+                            name="name"
+                            defaultValue={subcategory.name}
+                            required
+                            className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">
+                            Slug_Identifier
+                        </label>
+                        <input
+                            id="slug-input"
+                            type="text"
+                            name="slug"
+                            defaultValue={subcategory.slug}
+                            required
+                            className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-mono font-bold tracking-tighter outline-none focus:border-black dark:focus:border-white transition-all"
+                        />
+                    </div>
+
+                    <div className="relative" ref={dropdownRef}>
+                        <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">
+                            Parent_Node_Assignment
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                            className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none flex justify-between items-center"
+                        >
+                            <span>{categories.find(c => c.id === selectedCategoryId)?.name.toUpperCase() || "__SELECT_PARENT__"}</span>
+                            <svg className={`w-3 h-3 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {dropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
+                                {categories.map((c) => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedCategoryId(c.id);
+                                            setDropdownOpen(false);
+                                        }}
+                                        className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
+                                    >
+                                        {c.name.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Slug (URL)
-                    </label>
-                    <input
-                        id="slug-input"
-                        type="text"
-                        name="slug"
-                        defaultValue={subcategory.slug}
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-teal-500 outline-none transition-all dark:text-white"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Parent Category
-                    </label>
-                    <select
-                        name="categoryId"
-                        defaultValue={subcategory.categoryId}
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-teal-500 outline-none transition-all dark:text-white"
-                    >
-                        <option value="" disabled>
-                            Select a category
-                        </option>
-                        {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end gap-4">
+                <div className="pt-8 flex flex-col md:flex-row gap-4">
                     <button
                         type="button"
                         onClick={() => router.push("/admin/categories")}
-                        className="px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-all"
+                        className="w-full md:flex-1 py-4 md:py-6 bg-transparent text-black dark:text-white text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
                     >
-                        Cancel
+                        __CANCEL
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/30 transform hover:-translate-y-0.5 transition-all outline-none focus:ring-4 focus:ring-teal-500/50 disabled:opacity-50"
+                        className="w-full md:flex-[2] py-4 md:py-6 bg-black dark:bg-white text-white dark:text-black text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-transparent hover:text-black dark:hover:bg-transparent dark:hover:text-white transition-all disabled:opacity-20"
                     >
-                        {loading ? "Saving..." : "Save Changes"}
+                        {loading ? "PROCESSING..." : "SAVE_CHANGES"}
                     </button>
                 </div>
             </form>

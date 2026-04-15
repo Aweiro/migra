@@ -10,13 +10,13 @@ export async function submitProduct(formData: FormData) {
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
     const priceStr = formData.get("price") as string;
+    const salePriceStr = formData.get("salePrice") as string;
     const stockStr = formData.get("stock") as string;
-    const discountPercentStr = formData.get("discountPercent") as string;
-    const discountAmountStr = formData.get("discountAmount") as string;
     const subcategoryId = formData.get("subcategoryId") as string;
     const sizesStr = formData.get("sizes") as string;
     const brand = formData.get("brand") as string;
     const isCustomOrder = formData.get("isCustomOrder") === "on";
+    const label = (formData.get("label") as any) || null;
 
     const files = formData.getAll("images") as File[];
     const imageUrls: string[] = [];
@@ -30,9 +30,14 @@ export async function submitProduct(formData: FormData) {
     }
 
     const price = parseFloat(priceStr || "0");
+    const salePrice = salePriceStr ? parseFloat(salePriceStr) : null;
     const stock = parseInt(stockStr || "0", 10);
-    const discountPercent = parseFloat(discountPercentStr || "0");
-    const discountAmount = parseFloat(discountAmountStr || "0");
+
+    let discountAmount = 0;
+
+    if (salePrice !== null && salePrice < price) {
+      discountAmount = price - salePrice;
+    }
     const sizes = sizesStr ? sizesStr.split(",").map(s => s.trim()).filter(Boolean) : [];
 
     await createProduct({
@@ -41,13 +46,13 @@ export async function submitProduct(formData: FormData) {
       description,
       price,
       stock,
-      discountPercent,
       discountAmount,
       subcategoryId,
       images: imageUrls,
       sizes,
       brand,
       isCustomOrder,
+      label,
     });
 
     revalidatePath("/admin/products");
@@ -70,13 +75,13 @@ export async function editProductAction(id: string, formData: FormData, existing
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
     const priceStr = formData.get("price") as string;
+    const salePriceStr = formData.get("salePrice") as string;
     const stockStr = formData.get("stock") as string;
-    const discountPercentStr = formData.get("discountPercent") as string;
-    const discountAmountStr = formData.get("discountAmount") as string;
     const subcategoryId = formData.get("subcategoryId") as string;
     const sizesStr = formData.get("sizes") as string;
     const brand = formData.get("brand") as string;
     const isCustomOrder = formData.get("isCustomOrder") === "on";
+    const label = (formData.get("label") as any) || null;
 
     const files = formData.getAll("images") as File[];
     const uploadedImageUrls: string[] = [];
@@ -90,9 +95,14 @@ export async function editProductAction(id: string, formData: FormData, existing
     }
 
     const price = parseFloat(priceStr || "0");
+    const salePrice = salePriceStr ? parseFloat(salePriceStr) : null;
     const stock = parseInt(stockStr || "0", 10);
-    const discountPercent = parseFloat(discountPercentStr || "0");
-    const discountAmount = parseFloat(discountAmountStr || "0");
+
+    let discountAmount = 0;
+
+    if (salePrice !== null && salePrice < price) {
+      discountAmount = price - salePrice;
+    }
     const sizes = sizesStr ? sizesStr.split(",").map(s => s.trim()).filter(Boolean) : [];
 
     const { prisma } = await import("@/lib/prisma"); // direct fallback import for actions
@@ -105,13 +115,13 @@ export async function editProductAction(id: string, formData: FormData, existing
         description,
         price,
         stock,
-        discountPercent,
         discountAmount,
         subcategory: { connect: { id: subcategoryId } },
         images: [...existingImages, ...uploadedImageUrls],
         sizes,
         brand,
         isCustomOrder,
+        label,
       }
     });
 

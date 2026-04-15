@@ -43,24 +43,31 @@ model Subcategory {
   @@index([categoryId])
 }
 
+enum ProductLabel {
+  BESTSELLER
+  NEW
+  SALE
+}
+
 model Product {
-  id                String      @id @default(cuid())
+  id                String        @id @default(cuid())
   name              String
-  slug              String      @unique
+  slug              String        @unique
   description       String?
-  price             Decimal     @db.Decimal(10, 2)
-  discountPercent   Decimal     @default(0) @db.Decimal(5, 2)
-  discountAmount    Decimal     @default(0) @db.Decimal(10, 2)
-  images            String[]    @default([])
-  sizes             String[]    @default([])
-  stock             Int         @default(0)
-  isCustomOrder     Boolean     @default(false)
+  price             Decimal       @db.Decimal(10, 2)
+  discountAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  images            String[]      @default([])
+  sizes             String[]      @default([])
+  stock             Int           @default(0)
+  isActive          Boolean       @default(true)
+  isCustomOrder     Boolean       @default(false)
   brand             String?
+  label             ProductLabel?
   subcategoryId     String
-  subcategory       Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+  subcategory       Subcategory   @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
   orderItems        OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([subcategoryId])
 }

@@ -27,6 +27,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         notFound();
     }
 
+    const serializedProduct = JSON.parse(JSON.stringify(product));
+    const serializedCategories = JSON.parse(JSON.stringify(categories));
+
     return (
         <div className="py-12 px-4 sm:px-6 lg:px-8 relative">
             <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
@@ -42,7 +45,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                     <h1 className="text-4xl font-black tracking-tight dark:text-white">Edit Product</h1>
                     <p className="text-sm text-gray-500 mt-2">{product.name}</p>
                 </div>
-                <EditProductForm product={product} categories={categories} brands={brands} />
+                <EditProductForm product={serializedProduct} categories={serializedCategories} brands={brands} />
             </div>
         </div>
     );

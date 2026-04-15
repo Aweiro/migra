@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { submitProduct } from "./actions";
+import { useRouter } from "next/navigation";
 
 interface Category {
     id: string;
@@ -16,17 +17,24 @@ export default function ProductForm({
     categories: Category[];
     brands?: string[];
 }) {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [images, setImages] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
     const formRef = useRef<HTMLFormElement>(null);
+
+    // Dropdown States
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
+    const [selectedLabel, setSelectedLabel] = useState<string>("");
+    const [brandQuery, setBrandQuery] = useState("");
+
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files);
             setImages((prev) => [...prev, ...newFiles]);
-
             const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
             setPreviews((prev) => [...prev, ...newPreviews]);
         }
@@ -40,11 +48,23 @@ export default function ProductForm({
     const currentCategory = categories.find((c) => c.id === selectedCategoryId);
     const subcategories = currentCategory?.subcategories || [];
 
+    const labelOptions = [
+        { value: "", label: "__NONE__" },
+        { value: "BESTSELLER", label: "BESTSELLER" },
+        { value: "NEW", label: "NEW_COLLECTION" },
+        { value: "SALE", label: "SALE_REDUCTION" },
+    ];
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
+        // Add manual values for custom dropdowns since they aren't native inputs
+        formData.set("subcategoryId", selectedSubcategoryId);
+        formData.set("label", selectedLabel);
+        formData.set("brand", brandQuery);
+
         images.forEach((img) => {
             formData.append("images", img);
         });
@@ -52,311 +72,367 @@ export default function ProductForm({
         try {
             const result = await submitProduct(formData);
             if (result.success) {
-                alert("Product created successfully!");
+                alert("ENTRY_COMMITTED_SUCCESSFULLY");
                 formRef.current?.reset();
                 setImages([]);
                 setPreviews([]);
                 setSelectedCategoryId("");
+                setSelectedSubcategoryId("");
+                setSelectedLabel("");
+                setBrandQuery("");
             } else {
-                alert("Error: " + result.error);
+                alert("ERROR_CODE: " + result.error);
             }
         } catch (err) {
             console.error(err);
-            alert("An unexpected error occurred");
+            alert("UNEXPECTED_SYSTEM_FAILURE");
         } finally {
             setLoading(false);
         }
     };
 
+    // Close dropdowns on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            // Check if the click target is within a container that has a specific attribute
+            const target = event.target as HTMLElement;
+            if (!target.closest('[data-dropdown-container]')) {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-8 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:bg-black/40">
-            <div className="mb-8">
-                <h2 className="text-3xl font-black bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                    Create New Product
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Add a new product to your catalog with high-quality images and details.
+        <form ref={formRef} onSubmit={handleSubmit} className="max-w-6xl mx-auto py-12 px-6">
+            <div className="mb-8 md:mb-16 space-y-3 md:space-y-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-1 md:w-1.5 h-6 bg-black dark:bg-white" />
+                    <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white">New_Product_Entry</h1>
+                </div>
+                <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold text-black/40 dark:text-white/40">
+                    System Protocol v4.2 // Automated Indexing
                 </p>
             </div>
 
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Basic Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <div className="space-y-12">
+                    {/* Identification */}
                     <div className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                Product Name
-                            </label>
-                            <input
-                                type="text"
-                                name="name"
-                                required
-                                onChange={(e) => {
-                                    const slugInput = document.getElementById("slug-input") as HTMLInputElement;
-                                    if (slugInput && !slugInput.value.trim() && e.target.value) {
-                                        slugInput.value = e.target.value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
-                                    }
-                                }}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                placeholder="Premium Wireless Headphones"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                Slug
-                            </label>
-                            <input
-                                id="slug-input"
-                                type="text"
-                                name="slug"
-                                required
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                placeholder="premium-wireless-headphones"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                Description
-                            </label>
-                            <textarea
-                                name="description"
-                                rows={4}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none resize-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                placeholder="Describe your product beautifully..."
-                            ></textarea>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Category
-                                </label>
-                                <select
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                    value={selectedCategoryId}
-                                    onChange={(e) => setSelectedCategoryId(e.target.value)}
-                                    required
-                                >
-                                    <option value="" disabled>Select Category</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Subcategory
-                                </label>
-                                <select
-                                    name="subcategoryId"
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none transition-all disabled:opacity-50 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                    required
-                                    disabled={!selectedCategoryId || subcategories.length === 0}
-                                >
-                                    <option value="" disabled>Select Subcategory</option>
-                                    {subcategories.map((sc) => (
-                                        <option key={sc.id} value={sc.id}>
-                                            {sc.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Pricing & Media */}
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Price ($)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    step="0.01"
-                                    required
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                    placeholder="99.99"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Stock Units
-                                </label>
-                                <input
-                                    type="number"
-                                    name="stock"
-                                    defaultValue="0"
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Sizes & Status */}
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">01 // Primary Identification</span>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Brand
-                                </label>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Product Name</label>
                                 <input
                                     type="text"
-                                    name="brand"
-                                    list="brand-list"
-                                    placeholder="e.g. Nike, MIGRA, Apple"
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                    name="name"
+                                    required
+                                    onChange={(e) => {
+                                        const slugInput = document.getElementById("slug-input") as HTMLInputElement;
+                                        if (slugInput && !slugInput.value.trim() && e.target.value) {
+                                            slugInput.value = e.target.value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
+                                        }
+                                    }}
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
+                                    placeholder="ARCHIVAL_PIECE_v1"
                                 />
-                                <datalist id="brand-list">
-                                    {brands.map((b) => (
-                                        <option key={b} value={b} />
-                                    ))}
-                                </datalist>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Sizes (comma separated)
-                                </label>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Slug_Identifier</label>
+                                <input
+                                    id="slug-input"
+                                    type="text"
+                                    name="slug"
+                                    required
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-mono font-bold tracking-tighter outline-none focus:border-black dark:focus:border-white transition-all"
+                                    placeholder="automata-generated-id"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Documentation</label>
+                                <textarea
+                                    name="description"
+                                    rows={4}
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all resize-none"
+                                    placeholder="Input product description protocol..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mapping */}
+                    <div className="space-y-6">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">02 // Structural Mapping</span>
+                        <div className="grid grid-cols-2 gap-6">
+                            {/* Custom Category Select */}
+                            <div className="relative" data-dropdown-container>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Category</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenDropdown(openDropdown === "category" ? null : "category")}
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none flex justify-between items-center"
+                                >
+                                    <span>{categories.find(c => c.id === selectedCategoryId)?.name.toUpperCase() || "__SELECT__"}</span>
+                                    <svg className={`w-3 h-3 transition-transform ${openDropdown === "category" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {openDropdown === "category" && (
+                                    <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
+                                        {categories.map((c) => (
+                                            <button
+                                                key={c.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedCategoryId(c.id);
+                                                    setSelectedSubcategoryId("");
+                                                    setOpenDropdown(null);
+                                                }}
+                                                className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
+                                            >
+                                                {c.name.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Custom Subcategory Select */}
+                            <div className="relative" data-dropdown-container>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Subcategory</label>
+                                <button
+                                    type="button"
+                                    disabled={!selectedCategoryId || subcategories.length === 0}
+                                    onClick={() => setOpenDropdown(openDropdown === "subcategory" ? null : "subcategory")}
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none flex justify-between items-center disabled:opacity-20"
+                                >
+                                    <span>{subcategories.find(s => s.id === selectedSubcategoryId)?.name.toUpperCase() || "__SELECT__"}</span>
+                                    <svg className={`w-3 h-3 transition-transform ${openDropdown === "subcategory" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {openDropdown === "subcategory" && (
+                                    <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
+                                        {subcategories.map((sc) => (
+                                            <button
+                                                key={sc.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedSubcategoryId(sc.id);
+                                                    setOpenDropdown(null);
+                                                }}
+                                                className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
+                                            >
+                                                {sc.name.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Meta */}
+                    <div className="space-y-6">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">03 // System Attribution</span>
+                        <div className="grid grid-cols-2 gap-6">
+                            {/* Brand Input with Placeholder */}
+                            <div className="relative" data-dropdown-container>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Brand</label>
                                 <input
                                     type="text"
-                                    name="sizes"
-                                    placeholder="e.g. S, M, L, XL"
-                                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-purple-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                                    autoComplete="off"
+                                    value={brandQuery}
+                                    onChange={(e) => {
+                                        setBrandQuery(e.target.value);
+                                        setOpenDropdown("brand");
+                                    }}
+                                    onFocus={() => setOpenDropdown("brand")}
+                                    placeholder="MIGRA_CORE / ARCHIVE"
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none"
                                 />
-                            </div>
-                            <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10">
-                                <input
-                                    type="checkbox"
-                                    name="isCustomOrder"
-                                    id="isCustomOrder"
-                                    className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                />
-                                <label htmlFor="isCustomOrder" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-                                    Enable as Custom Order (Pre-order/Made-to-order)
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/10">
-                            <h3 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-4">Promotions & Discounts</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                                        Discount %
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="discountPercent"
-                                        step="0.01"
-                                        defaultValue="0"
-                                        max="100"
-                                        min="0"
-                                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-black/50 border border-indigo-500/20 focus:ring-2 focus:ring-indigo-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
-                                        Direct Amount Off ($)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="discountAmount"
-                                        step="0.01"
-                                        defaultValue="0"
-                                        className="w-full px-4 py-2 rounded-xl bg-white dark:bg-black/50 border border-indigo-500/20 focus:ring-2 focus:ring-indigo-500 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Image Uploader */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                Product Images
-                            </label>
-                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-700 border-dashed rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden group">
-                                <div className="space-y-1 text-center">
-                                    <svg
-                                        className="mx-auto h-12 w-12 text-gray-400 group-hover:text-purple-500 transition-colors"
-                                        stroke="currentColor"
-                                        fill="none"
-                                        viewBox="0 0 48 48"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                            strokeWidth={2}
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
-                                    <div className="flex text-sm text-gray-600 dark:text-gray-400 justify-center">
-                                        <span className="relative cursor-pointer bg-transparent rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
-                                            Upload files
-                                        </span>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG up to 5MB</p>
-                                </div>
-                            </div>
-
-                            {/* Previews */}
-                            {previews.length > 0 && (
-                                <div className="flex gap-4 mt-4 overflow-x-auto pb-2 custom-scrollbar">
-                                    {previews.map((src, index) => (
-                                        <div key={index} className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden shadow-sm group">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={src}
-                                                alt={`Preview ${index}`}
-                                                className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                                            />
+                                {openDropdown === "brand" && (
+                                    <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
+                                        {brandQuery && !brands.some(b => b.toLowerCase() === brandQuery.toLowerCase()) && (
                                             <button
                                                 type="button"
-                                                onClick={() => removeImage(index)}
-                                                className="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center font-bold text-lg"
+                                                onClick={() => { setBrandQuery(brandQuery); setOpenDropdown(null); }}
+                                                className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
                                             >
-                                                ×
+                                                [+] Add_New: {brandQuery.toUpperCase()}
                                             </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                        )}
+                                        {brands.filter(b => b.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
+                                            <button
+                                                key={b}
+                                                type="button"
+                                                onClick={() => { setBrandQuery(b); setOpenDropdown(null); }}
+                                                className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
+                                            >
+                                                {b.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Custom Special Label Select */}
+                            <div className="relative" data-dropdown-container>
+                                <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Special Label</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setOpenDropdown(openDropdown === "label" ? null : "label")}
+                                    className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-[10px] text-black dark:text-white font-black uppercase tracking-widest outline-none flex justify-between items-center"
+                                >
+                                    <span>{labelOptions.find(l => l.value === selectedLabel)?.label || "__NONE__"}</span>
+                                    <svg className={`w-3 h-3 transition-transform ${openDropdown === "label" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {openDropdown === "label" && (
+                                    <div className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-black border border-black dark:border-white shadow-2xl max-h-48 overflow-y-auto no-scrollbar">
+                                        {labelOptions.map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedLabel(opt.value);
+                                                    setOpenDropdown(null);
+                                                }}
+                                                className="w-full px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border-b border-black/5"
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 py-4 border-y border-black/5 dark:border-white/5">
+                            <input
+                                type="checkbox"
+                                name="isCustomOrder"
+                                id="isCustomOrder"
+                                className="w-4 h-4 rounded-none border-black/20 dark:border-white/20 text-black dark:text-white focus:ring-black accent-black"
+                            />
+                            <label htmlFor="isCustomOrder" className="text-[10px] uppercase font-black tracking-widest text-black/60 dark:text-white/60 cursor-pointer">
+                                Enable_Custom_Order_Protocol (Pre-order)
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                {/* Submit */}
-                <div className="pt-6 border-t border-gray-200 dark:border-white/10 flex justify-end">
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all outline-none focus:ring-4 focus:ring-purple-500/50 disabled:opacity-50 disabled:pointer-events-none disabled:transform-none"
-                    >
-                        {loading ? (
-                            <span className="flex items-center gap-2">
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Creating...
-                            </span>
-                        ) : (
-                            "Save Product"
+                <div className="space-y-12">
+                    {/* Metrics */}
+                    <div className="space-y-6">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">04 // Economic Metrics</span>
+                        <div className="space-y-4">
+                            <label className="block text-[10px] uppercase font-black tracking-widest text-black dark:text-white">Pricing Structure</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 border border-black/10 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01]">
+                                <div>
+                                    <label className="block text-[8px] uppercase font-bold mb-2 text-black/40 dark:text-white/40">Base Price (Original $)</label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        step="0.01"
+                                        required
+                                        placeholder="0.00"
+                                        className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[8px] uppercase font-bold mb-2 text-black/40 dark:text-white/40">Sale Price (Current $)</label>
+                                    <input
+                                        type="number"
+                                        name="salePrice"
+                                        step="0.01"
+                                        placeholder="Optional"
+                                        className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Inventory Management</label>
+                            <input
+                                type="number"
+                                name="stock"
+                                placeholder="0"
+                                className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Dimensions */}
+                    <div className="space-y-6">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">05 // Physical Dimension Matrix</span>
+                        <div>
+                            <label className="block text-[10px] uppercase font-black tracking-widest mb-4 text-black dark:text-white">Sizes (Input as CSV)</label>
+                            <input
+                                type="text"
+                                name="sizes"
+                                placeholder="XS, S, M, L, XL, OS"
+                                className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Assets */}
+                    <div className="space-y-6">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">06 // Visual Assets Protocol</span>
+                        <div className="border border-black/20 dark:border-white/20 p-8 text-center relative group cursor-pointer hover:bg-black/[0.02] transition-all">
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="space-y-2">
+                                <div className="text-[10px] text-black dark:text-white font-black uppercase tracking-[0.4em]">Asset_Push_Protocol</div>
+                                <div className="text-[8px] uppercase tracking-widest text-black/30 dark:text-white/30">Upload Multi_Media Content</div>
+                            </div>
+                        </div>
+
+                        {previews.length > 0 && (
+                            <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                                {previews.map((src, index) => (
+                                    <div key={index} className="aspect-square relative border border-black/10 p-1 group">
+                                        <img src={src} className="w-full h-full object-cover grayscale brightness-90" alt="" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-black"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         )}
-                    </button>
+                    </div>
+
+                    <div className="pt-8 flex flex-col md:flex-row gap-4">
+                        <button
+                            type="button"
+                            onClick={() => router.push("/admin/products")}
+                            className="w-full md:flex-1 py-4 md:py-6 bg-transparent text-black dark:text-white text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                        >
+                            __CANCEL
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full md:flex-[2] py-4 md:py-6 bg-black dark:bg-white text-white dark:text-black text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-transparent hover:text-black dark:hover:bg-transparent dark:hover:text-white transition-all disabled:opacity-20"
+                        >
+                            {loading ? "INITIALIZING_UPLOAD..." : "SAVE_CHANGES"}
+                        </button>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     );
 }

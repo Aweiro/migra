@@ -8,8 +8,11 @@ export type WishlistProduct = {
     title: string;
     price: number;
     image?: string;
+    hoverImage?: string;
+    allImages?: string[];
     slug: string;
     sizes?: string[];
+    label?: 'BESTSELLER' | 'NEW' | 'SALE' | null;
 };
 
 type WishlistStore = {

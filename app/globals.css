@@ -22,25 +22,44 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Custom scrollbar for minimalist look */
+/* Custom scrollbar - ultra technical */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 3px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #fdfdfd;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #000;
+  border-radius: 0px;
 }
+
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-marquee {
   display: flex;
   width: max-content;
   animation: marquee 35s linear infinite;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

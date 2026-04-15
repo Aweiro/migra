@@ -1,162 +1,244 @@
-import { getProducts } from "@/services/product.service";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import ProductStatusToggle from "./ProductStatusToggle";
 
-export const metadata = {
-    title: "Products Admin | Dashboard",
-};
-
-export default async function AdminProductsPage({
-    searchParams,
-}: {
+interface PageProps {
     searchParams: Promise<{ categoryId?: string }>;
-}) {
-    const resolvedParams = await searchParams;
-    const { categoryId } = resolvedParams;
+}
+
+export default async function AdminProductsPage({ searchParams }: PageProps) {
+    const params = await searchParams;
+    const categoryId = params.categoryId;
 
     const [products, categories] = await Promise.all([
-        getProducts(categoryId),
-        prisma.category.findMany({ orderBy: { name: 'asc' } })
+        prisma.product.findMany({
+            where: categoryId ? { subcategory: { categoryId } } : {},
+            include: {
+                subcategory: {
+                    include: {
+                        category: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        }),
+        prisma.category.findMany(),
     ]);
 
     return (
-        <div className="py-12 px-4 sm:px-6 lg:px-8 relative">
-            {/* Background Decor */}
-            <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
-
-            <div className="max-w-7xl mx-auto relative z-10">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-                    <div>
-                        <h1 className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                            Products Management
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                            Manage your store catalog, pricing, and inventory.
+        <div className="min-h-screen bg-[#f8f8f8] dark:bg-[#080808] py-8 md:py-12 px-4 md:px-10">
+            <div className="max-w-7xl mx-auto">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-6 md:gap-8">
+                    <div className="space-y-3 md:space-y-4 w-full">
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <div className="w-1 h-6 md:h-8 bg-black dark:bg-white flex-shrink-0" />
+                            <h1 className="text-xl sm:text-2xl md:text-5xl font-black uppercase tracking-tighter text-black dark:text-white leading-none break-words">
+                                Inventory_Registry
+                            </h1>
+                        </div>
+                        <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] font-bold text-black/40 dark:text-white/40 leading-relaxed max-w-full">
+                            System Control // Database Management // v4.2.0
                         </p>
                     </div>
+
                     <Link
                         href="/admin/products/create"
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transform hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2"
+                        className="w-full md:w-auto px-6 md:px-10 py-4 md:py-5 bg-black dark:bg-white text-white dark:text-black text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-black transition-all hover:bg-zinc-800 dark:hover:bg-zinc-200 flex items-center justify-center gap-4 md:gap-6 group border border-black dark:border-white shadow-[8px_8px_0_rgba(0,0,0,0.05)] md:shadow-none whitespace-nowrap"
                     >
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        <span>[+] Create_Entry</span>
+                        <svg className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        Add New Product
                     </Link>
                 </div>
 
-                {/* Filters */}
-                <div className="mb-6 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                {/* Filter Navigation */}
+                <div className="mb-8 md:mb-12 flex gap-1 overflow-x-auto no-scrollbar py-2 border-b border-black/5 dark:border-white/5">
                     <Link
                         href="/admin/products"
-                        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${!categoryId
-                            ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                            : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
+                        className={`px-4 md:px-6 py-3 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-black transition-all border whitespace-nowrap ${!categoryId
+                            ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                            : "bg-transparent border-transparent text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white"
                             }`}
                     >
-                        All Categories
+                        Index_All
                     </Link>
                     {categories.map((cat) => (
                         <Link
                             key={cat.id}
                             href={`/admin/products?categoryId=${cat.id}`}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${categoryId === cat.id
-                                ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20"
-                                : "bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10"
+                            className={`px-4 md:px-6 py-3 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-black transition-all border whitespace-nowrap ${categoryId === cat.id
+                                ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                                : "bg-transparent border-transparent text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white"
                                 }`}
                         >
-                            {cat.name}
+                            {cat.name.toUpperCase()}
                         </Link>
                     ))}
                 </div>
 
-                <div className="bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                {/* Table / Ledger */}
+                <div className="bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 overflow-hidden shadow-[12px_12px_0_rgba(0,0,0,0.02)] md:shadow-none">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block overflow-x-auto no-scrollbar">
+                        <table className="w-full text-left border-collapse table-auto">
                             <thead>
-                                <tr className="bg-gray-50/50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <th className="px-6 py-4">Product</th>
-                                    <th className="px-6 py-4">Category</th>
-                                    <th className="px-6 py-4">Pricing</th>
-                                    <th className="px-6 py-4">Stock</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
+                                <tr className="bg-black/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 text-[9px] uppercase tracking-[0.3em] font-black text-black/50 dark:text-white/50">
+                                    <th className="px-6 py-6 text-left whitespace-nowrap">ID_Code / Specification</th>
+                                    <th className="px-6 py-6 text-left whitespace-nowrap">Classification</th>
+                                    <th className="px-6 py-6 text-left whitespace-nowrap">Market_Value</th>
+                                    <th className="px-6 py-6 text-left whitespace-nowrap">Inventory</th>
+                                    <th className="px-6 py-6 text-right whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                            <tbody className="divide-y divide-black/5 dark:divide-white/5">
                                 {products.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                            No products found in this category.
+                                        <td colSpan={5} className="px-8 py-24 text-center text-[10px] uppercase tracking-[0.5em] font-bold text-black/20 dark:text-white/20">
+                                            NO_DATA_RETRIEVED
                                         </td>
                                     </tr>
                                 )}
                                 {products.map((product) => (
                                     <tr
                                         key={product.id}
-                                        className="group hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors"
+                                        className="group hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
                                     >
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 relative border border-gray-200 dark:border-gray-700">
+                                                <div className="w-14 h-14 bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 p-1 flex-shrink-0 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
                                                     {product.images?.[0] ? (
                                                         <img
                                                             src={product.images[0]}
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-cover grayscale brightness-95 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-700"
                                                             alt={product.name}
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
-                                                            No Img
+                                                        <div className="w-full h-full flex items-center justify-center text-[8px] font-black uppercase text-black/10 dark:text-white/10">
+                                                            N/A
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div>
-                                                    <div className="font-semibold text-gray-900 dark:text-white">
+                                                <div className="space-y-1">
+                                                    <div className="text-[11px] font-black uppercase tracking-widest text-black dark:text-white truncate max-w-[200px]">
                                                         {product.name}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {product.slug}
+                                                    <div className="text-[8px] text-black/30 dark:text-white/30 font-mono tracking-tighter">
+                                                        ID: {product.id.slice(0, 8).toUpperCase()}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                                                {product.subcategory?.category?.name} &rarr; {product.subcategory?.name}
+                                        <td className="px-6 py-6">
+                                            <span className="text-[8px] uppercase tracking-[0.2em] font-black px-2 py-1 bg-black/5 dark:bg-white/5 text-black/60 dark:text-white/60 whitespace-nowrap">
+                                                {product.subcategory?.category?.name} // {product.subcategory?.name}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                ${Number(product.price).toFixed(2)}
+                                        <td className="px-6 py-6">
+                                            <div className="text-[11px] font-black tracking-widest text-black dark:text-white">
+                                                ${(Number(product.price) - Number(product.discountAmount)).toFixed(2)}
+                                                {Number(product.discountAmount) > 0 && (
+                                                    <span className="ml-2 text-[9px] text-black/20 dark:text-white/20 line-through tracking-normal font-normal">
+                                                        ${Number(product.price).toFixed(2)}
+                                                    </span>
+                                                )}
                                             </div>
-                                            {Number(product.discountPercent) > 0 && (
-                                                <div className="text-xs text-green-600 dark:text-green-400 mt-0.5 font-medium">
-                                                    -{Number(product.discountPercent)}% Off
+                                            {product.label && (
+                                                <div className="text-[8px] text-orange-500 dark:text-orange-400 mt-1 font-black uppercase tracking-widest">
+                                                    [{product.label.toUpperCase()}]
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-sm font-medium ${product.stock > 0 ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>
-                                                {product.stock} in stock
-                                            </span>
+                                        <td className="px-6 py-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-0.5 h-3 ${product.stock > 10 ? "bg-black dark:bg-white" : "bg-red-500"}`} />
+                                                <span className={`text-[9px] uppercase font-black tracking-widest ${product.stock > 0 ? "text-black dark:text-white" : "text-red-500"}`}>
+                                                    {product.stock}U_QTY
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Link
-                                                href={`/admin/products/${product.id}/edit`}
-                                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
-                                            >
-                                                Edit
-                                            </Link>
+                                        <td className="px-6 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                <ProductStatusToggle
+                                                    productId={product.id}
+                                                    initialStatus={product.isActive}
+                                                />
+                                                <Link
+                                                    href={`/admin/products/${product.id}/edit`}
+                                                    className="inline-block px-4 py-2 border border-black dark:border-white text-[9px] uppercase tracking-[0.2em] font-black hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                                                >
+                                                    MODIFY
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card Layout */}
+                    <div className="md:hidden divide-y divide-black/10 dark:divide-white/10">
+                        {products.map((product) => (
+                            <div key={product.id} className="p-6 space-y-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-20 h-20 bg-white dark:bg-zinc-900 border border-black/5 p-1 flex-shrink-0 overflow-hidden">
+                                        {product.images?.[0] ? (
+                                            <img src={product.images[0]} className="w-full h-full object-cover grayscale" alt="" />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-100 dark:bg-zinc-800" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-[13px] font-black uppercase tracking-tight text-black dark:text-white truncate">
+                                                {product.name}
+                                            </div>
+                                            {product.label && (
+                                                <span className="text-[7px] text-orange-500 dark:text-orange-400 font-black uppercase tracking-widest">
+                                                    [{product.label}]
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-[9px] text-black/40 dark:text-white/40 uppercase tracking-widest font-bold">
+                                            {product.subcategory?.category?.name}
+                                        </div>
+                                        <div className="flex flex-col gap-2 mt-4">
+                                            <ProductStatusToggle
+                                                productId={product.id}
+                                                initialStatus={product.isActive}
+                                            />
+                                            <Link
+                                                href={`/admin/products/${product.id}/edit`}
+                                                className="w-full px-6 py-2 border border-black dark:border-white text-[9px] text-center uppercase font-black hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                                            >
+                                                MODIFY_RECORD
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 pt-4 border-t border-black/5 gap-4">
+                                    <div className="space-y-1">
+                                        <span className="text-[8px] uppercase font-black text-black/30 dark:text-white/30 tracking-widest">Market Value</span>
+                                        <div className="text-[11px] font-black text-black dark:text-white tracking-widest">
+                                            ${(Number(product.price) - Number(product.discountAmount)).toFixed(2)}
+                                            {Number(product.discountAmount) > 0 && (
+                                                <span className="ml-2 text-[8px] text-black/20 dark:text-white/20 line-through tracking-normal font-normal">
+                                                    ${Number(product.price).toFixed(2)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1 text-right">
+                                        <span className="text-[8px] uppercase font-black text-black/30 dark:text-white/30 tracking-widest">Inventory</span>
+                                        <div className={`text-[11px] font-black tracking-widest ${product.stock > 0 ? "text-black dark:text-white" : "text-red-500"}`}>{product.stock}U_QTY</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

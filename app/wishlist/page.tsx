@@ -18,6 +18,7 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [showSizeError, setShowSizeError] = useState(false);
     const [isAdded, setIsAdded] = useState(false);
+    const [currentImgIdx, setCurrentImgIdx] = useState(0);
     const router = useRouter();
 
     const handleAddToCart = () => {
@@ -45,17 +46,69 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
         <div className="group space-y-4">
             <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden">
                 <Link href={`/product/${item.slug}`}>
-                    {item.image ? (
-                        <Image
-                            src={item.image}
-                            alt={item.title}
-                            fill
-                            className="object-cover transition-transform duration-500"
-                            sizes="(max-width: 768px) 50vw, 25vw"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[9px] uppercase tracking-widest text-black/20 font-bold">No Image</div>
-                    )}
+                    <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden">
+                        {item.label && (
+                            <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
+                                <span className={`text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] px-2 py-1 md:px-2.5 md:py-1.5 shadow-2xl backdrop-blur-md ${item.label === 'BESTSELLER' ? 'bg-black text-white' :
+                                        item.label === 'NEW' ? 'bg-white text-black border border-black/10' :
+                                            'bg-zinc-100 text-black'
+                                    }`}>
+                                    {item.label === 'BESTSELLER' ? 'Hit' : item.label === 'NEW' ? 'New' : 'Sale'}
+                                </span>
+                            </div>
+                        )}
+                        {/* Desktop View: Smooth Hover */}
+                        <div className="hidden md:block absolute inset-0">
+                            <Image
+                                src={item.image}
+                                alt={item.title}
+                                fill
+                                className={`object-cover transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] ${item.hoverImage ? "group-hover:opacity-0 group-hover:scale-105 group-hover:-translate-x-3 group-hover:blur-sm" : "group-hover:opacity-90"}`}
+                                sizes="25vw"
+                            />
+                            {item.hoverImage && (
+                                <Image
+                                    src={item.hoverImage}
+                                    alt={`${item.title} - alternative view`}
+                                    fill
+                                    className="object-cover opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] scale-110 group-hover:scale-100 translate-x-3 group-hover:translate-x-0"
+                                    sizes="25vw"
+                                />
+                            )}
+                        </div>
+
+                        {/* Mobile View: Carousel with Arrows */}
+                        <div className="md:hidden absolute inset-0">
+                            {(item.allImages || [item.image, item.hoverImage].filter(Boolean)).map((img: any, idx: number) => (
+                                <Image
+                                    key={idx}
+                                    src={img}
+                                    alt={`${item.title} - view ${idx + 1}`}
+                                    fill
+                                    className={`object-cover transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${idx === currentImgIdx ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[15%]"}`}
+                                    sizes="50vw"
+                                />
+                            ))}
+
+                            {/* Arrows for Mobile */}
+                            {(item.allImages?.length || [item.image, item.hoverImage].filter(Boolean).length) > 1 && (
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-0 z-20">
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentImgIdx(prev => (prev - 1 + (item.allImages?.length || 2)) % (item.allImages?.length || 2)); }}
+                                        className="w-7 h-7 flex items-center justify-center bg-white/25 backdrop-blur-[1px] text-black/45 active:text-black transition-all"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M15 18l-6-6 6-6" /></svg>
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentImgIdx(prev => (prev + 1) % (item.allImages?.length || 2)); }}
+                                        className="w-7 h-7 flex items-center justify-center bg-white/25 backdrop-blur-[1px] text-black/45 active:text-black transition-all"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M9 18l6-6-6-6" /></svg>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </Link>
                 {/* Remove button */}
                 <button
@@ -69,21 +122,21 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                 </button>
             </div>
             <div className="space-y-3">
-                <div className="space-y-1">
+                <div className="space-y-2">
                     <Link href={`/product/${item.slug}`} className="hover:text-black/50 transition-colors">
                         <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-black leading-tight truncate">{item.title}</h2>
                     </Link>
-                    <div className="flex items-center justify-between">
+                    <div className="space-y-2.5">
                         <p className="text-[10px] tracking-widest font-bold text-black/40">€{item.price.toFixed(2)}</p>
 
-                        {/* Size Picker on Hover */}
+                        {/* Size Picker - Always Visible */}
                         {item.sizes && item.sizes.length > 0 && (
-                            <div className={`flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 ${showSizeError ? "scale-110 opacity-100" : ""}`}>
-                                {item.sizes.slice(0, 5).map((size: string) => (
+                            <div className={`flex flex-wrap gap-1 transition-all duration-300 ${showSizeError ? "scale-[1.02]" : ""}`}>
+                                {item.sizes.map((size: string) => (
                                     <button
                                         key={size}
                                         onClick={() => { setSelectedSize(selectedSize === size ? null : size); setShowSizeError(false); }}
-                                        className={`min-w-[20px] h-5 flex items-center justify-center text-[8px] font-bold border transition-colors ${selectedSize === size
+                                        className={`min-w-[24px] h-6 px-1 flex items-center justify-center text-[8px] font-bold border transition-colors ${selectedSize === size
                                             ? "bg-black text-white border-black"
                                             : showSizeError
                                                 ? "border-red-500 text-red-500 animate-pulse"
@@ -115,10 +168,10 @@ export default function WishlistPage() {
 
     return (
         <main className="flex-1 flex flex-col min-h-screen justify-between bg-white pt-6 border-t border-black/[0.03]">
-            <div className="mx-auto w-full max-w-[1500px] px-6 mb-16">
+            <div className="mx-auto w-full max-w-[1500px] px-6 mb-8 md:mb-16">
 
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-12">
+                <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-6 md:mb-12">
                     <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-black/30">
                         <Link href="/" className="hover:text-black transition-colors">Home</Link>
                         <span>/</span>

@@ -8,7 +8,7 @@ export function ProductActions({
     product,
     sizes = []
 }: {
-    product: { id: string; name: string; price: number; image?: string; slug: string; stock: number; isCustomOrder: boolean };
+    product: { id: string; name: string; price: number; image?: string; slug: string; stock: number; isCustomOrder: boolean; label?: any };
     sizes?: string[];
 }) {
     const safeSizes = sizes || [];
@@ -51,6 +51,7 @@ export function ProductActions({
                 price: product.price,
                 image: product.image,
                 slug: product.slug,
+                label: product.label,
             });
         }
     };
