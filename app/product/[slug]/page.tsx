@@ -5,6 +5,7 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductActions } from "@/components/ProductActions";
 import { ProductCard } from "@/components/ProductCard";
 import { Footer } from "@/components/Footer";
+import { getServerTranslation } from "@/lib/i18n/server";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
     const resolvedParams = await params;
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const resolvedParams = await params;
+    const { t } = await getServerTranslation();
 
     const rawProduct = await prisma.product.findUnique({
         where: { slug: resolvedParams.slug },
@@ -56,7 +58,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     });
 
     const breadcrumbs = [
-        { label: "Home", href: "/" },
+        { label: t('common.home'), href: "/" },
         { label: product.subcategory.category.name, href: `/${product.subcategory.category.slug}` },
         { label: product.subcategory.name, href: `/${product.subcategory.category.slug}/${product.subcategory.slug}` },
         { label: product.name, href: `/product/${product.slug}` }
@@ -88,7 +90,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         <div className="w-12 h-[1px] bg-black/10 hidden xl:block" />
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-1 rounded-full bg-black animate-pulse" />
-                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black whitespace-nowrap">Archival Item</span>
+                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black whitespace-nowrap">{t('product.archival_item')}</span>
                         </div>
                     </div>
                 </div>
@@ -120,7 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                                                 ${price.toFixed(2)}
                                             </span>
                                             <span className="text-[10px] uppercase tracking-widest font-bold text-red-500">
-                                                {discountPercent}% OFF
+                                                {discountPercent}% {t('product.off')}
                                             </span>
                                         </>
                                     )}
@@ -149,25 +151,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <div className="mt-16 pt-12 border-t border-black/5">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-24">
                         <div className="space-y-6">
-                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">Description</h3>
+                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">{t('product.description')}</h3>
                             <div className="text-xs font-light leading-loose text-black/70 whitespace-pre-wrap">
-                                {product.description || "Minimalist by design. Engineered for maximum context. This piece integrates seamlessly into the contemporary wardrobe, balancing structured aesthetics with fluid functionality."}
+                                {product.description || t('product.default_desc')}
                             </div>
                         </div>
                         <div className="space-y-6">
-                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">Specifications</h3>
+                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">{t('product.specifications')}</h3>
                             <ul className="space-y-3 text-[11px] uppercase tracking-[0.2em] text-black/60 list-disc list-inside bg-[#f9f9f9] p-6">
-                                <li>High-density construction</li>
-                                <li>Manufactured ethically in Europe</li>
-                                <li>Contextual fit (True to size)</li>
-                                <li>Product Ref: {product.id.slice(0, 8).toUpperCase()}</li>
+                                <li>{t('product.spec_1')}</li>
+                                <li>{t('product.spec_2')}</li>
+                                <li>{t('product.spec_3')}</li>
+                                <li>{t('product.spec_ref')}: {product.id.slice(0, 8).toUpperCase()}</li>
                             </ul>
                         </div>
                         <div className="space-y-6">
-                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">Shipping & Returns</h3>
+                            <h3 className="text-[11px] uppercase tracking-[0.4em] font-black border-b border-black pb-4 inline-block text-black">{t('product.shipping_returns')}</h3>
                             <div className="space-y-4 text-[10px] uppercase tracking-[0.2em] text-black/50 leading-loose">
-                                <p>Complimentary express shipping on all orders over $200.</p>
-                                <p>14-day archival return policy. Items must be unworn with all tags attached.</p>
+                                <p>{t('product.shipping_desc_1')}</p>
+                                <p>{t('product.shipping_desc_2')}</p>
                             </div>
                         </div>
                     </div>
@@ -177,7 +179,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 {relatedProducts.length > 0 && (
                     <div className="mt-16 border-t border-black/5 pt-12">
                         <div className="flex items-center justify-between mb-16">
-                            <h3 className="text-xl md:text-3xl font-black text-black uppercase tracking-tighter">Related Context</h3>
+                            <h3 className="text-xl md:text-3xl font-black text-black uppercase tracking-tighter">{t('product.related_context')}</h3>
                         </div>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
                             {relatedProducts.map((p) => (

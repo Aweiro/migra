@@ -63,3 +63,36 @@ body {
   scrollbar-width: none;
   /* Firefox */
 }
+
+/* Global Loader Overlay Control */
+body:has(#nprogress) #global-nav-loader,
+body.switching-language #global-nav-loader {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+    width: 10%;
+  }
+
+  50% {
+    transform: translateX(50%);
+    width: 40%;
+  }
+
+  100% {
+    transform: translateX(300%);
+    width: 10%;
+  }
+}
+
+#nprogress .bar {
+  background: #000 !important;
+  height: 2px !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #000, 0 0 5px #000 !important;
+}

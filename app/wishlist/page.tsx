@@ -7,6 +7,7 @@ import { useCartStore } from "@/lib/stores/cart.store";
 import { Footer } from "@/components/Footer";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface WishlistItemProps {
     item: any;
@@ -14,6 +15,7 @@ interface WishlistItemProps {
 }
 
 function WishlistItem({ item, onRemove }: WishlistItemProps) {
+    const { t } = useLanguage();
     const addToCart = useCartStore((state) => state.addToCart);
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [showSizeError, setShowSizeError] = useState(false);
@@ -50,10 +52,10 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                         {item.label && (
                             <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
                                 <span className={`text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] px-2 py-1 md:px-2.5 md:py-1.5 shadow-2xl backdrop-blur-md ${item.label === 'BESTSELLER' ? 'bg-black text-white' :
-                                        item.label === 'NEW' ? 'bg-white text-black border border-black/10' :
-                                            'bg-zinc-100 text-black'
+                                    item.label === 'NEW' ? 'bg-white text-black border border-black/10' :
+                                        'bg-zinc-100 text-black'
                                     }`}>
-                                    {item.label === 'BESTSELLER' ? 'Hit' : item.label === 'NEW' ? 'New' : 'Sale'}
+                                    {item.label === 'BESTSELLER' ? t('common.hit') : item.label === 'NEW' ? t('common.new_arrival') : t('common.sale')}
                                 </span>
                             </div>
                         )}
@@ -127,7 +129,7 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                         <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-black leading-tight truncate">{item.title}</h2>
                     </Link>
                     <div className="space-y-2.5">
-                        <p className="text-[10px] tracking-widest font-bold text-black/40">€{item.price.toFixed(2)}</p>
+                        <p className="text-[10px] tracking-widest font-bold text-black/40">${item.price.toFixed(2)}</p>
 
                         {/* Size Picker - Always Visible */}
                         {item.sizes && item.sizes.length > 0 && (
@@ -154,7 +156,7 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
                     onClick={handleAddToCart}
                     className="w-full border border-black/10 py-2.5 text-[9px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all duration-300"
                 >
-                    {isAdded ? "Added ✓" : (item.sizes && item.sizes.length > 0 && !selectedSize ? (showSizeError ? "Choose Size" : "Select Size") : "Add to Cart")}
+                    {isAdded ? t('common.added') : (item.sizes && item.sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
                 </button>
             </div>
         </div>
@@ -162,6 +164,7 @@ function WishlistItem({ item, onRemove }: WishlistItemProps) {
 }
 
 export default function WishlistPage() {
+    const { t } = useLanguage();
     const items = useWishlistStore((state) => state.items);
     const removeFromWishlist = useWishlistStore((state) => state.removeFromWishlist);
     const clearWishlist = useWishlistStore((state) => state.clearWishlist);
@@ -173,45 +176,45 @@ export default function WishlistPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-black/[0.1] pb-6 mb-6 md:mb-12">
                     <nav className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-black text-black/30">
-                        <Link href="/" className="hover:text-black transition-colors">Home</Link>
+                        <Link href="/" className="hover:text-black transition-colors">{t('common.home')}</Link>
                         <span>/</span>
-                        <span className="text-black">Wishlist</span>
+                        <span className="text-black">{t('wishlist.title')}</span>
                     </nav>
                     <div className="flex items-center gap-4">
                         <span className="text-[10px] uppercase tracking-[0.5em] font-black text-black/20">MIGRA®</span>
                         <div className="w-12 h-[1px] bg-black/10 hidden sm:block" />
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-1 rounded-full bg-black" />
-                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black">Saved Items</span>
+                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black">{t('wishlist.saved_items')}</span>
                         </div>
                     </div>
                 </div>
 
                 {items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-32 gap-8 text-center">
-                        <div className="text-[80px] leading-none opacity-5 font-black uppercase tracking-tighter select-none">Saved</div>
+                        <div className="text-[80px] leading-none opacity-5 font-black uppercase tracking-tighter select-none">{t('wishlist.title')}</div>
                         <div className="space-y-3">
-                            <h1 className="text-2xl font-black uppercase tracking-tighter text-black">No Saved Items</h1>
-                            <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/30">Items you save will appear here</p>
+                            <h1 className="text-2xl font-black uppercase tracking-tighter text-black">{t('wishlist.empty_title')}</h1>
+                            <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/30">{t('wishlist.empty_desc')}</p>
                         </div>
                         <Link
                             href="/"
                             className="mt-4 bg-black text-white px-8 py-3 text-[10px] uppercase tracking-[0.4em] font-bold hover:bg-black/90 transition-colors"
                         >
-                            Explore the Archive
+                            {t('wishlist.explore_archive')}
                         </Link>
                     </div>
                 ) : (
                     <div>
                         <div className="flex items-center justify-between mb-10">
                             <h1 className="text-sm uppercase tracking-[0.4em] font-black text-black">
-                                Saved Items <span className="text-black/30">({items.length})</span>
+                                {t('wishlist.saved_items')} <span className="text-black/30">({items.length})</span>
                             </h1>
                             <button
                                 onClick={clearWishlist}
                                 className="text-[9px] uppercase tracking-[0.3em] font-bold text-black/30 hover:text-black transition-colors border-b border-black/20 hover:border-black pb-0.5"
                             >
-                                Clear All
+                                {t('wishlist.clear_all')}
                             </button>
                         </div>
 

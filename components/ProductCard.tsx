@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCartStore } from "@/lib/stores/cart.store";
 import { useWishlistStore } from "@/lib/stores/wishlist.store";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 type ProductCardProps = {
   id: string;
@@ -45,6 +46,7 @@ export function ProductCard({
   sizes = [],
   label,
 }: ProductCardProps) {
+  const { t } = useLanguage();
   const [isAdded, setIsAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showSizeError, setShowSizeError] = useState(false);
@@ -199,7 +201,7 @@ export function ProductCard({
               label === 'NEW' ? 'bg-white text-black border border-black/20' :
                 'bg-zinc-100 text-black border border-black/5'
               }`}>
-              {label === 'BESTSELLER' ? 'Hit' : label === 'NEW' ? 'New' : 'Sale'}
+              {label === 'BESTSELLER' ? t('common.hit') : label === 'NEW' ? t('common.new_arrival') : t('common.sale')}
             </span>
           </div>
         )}
@@ -273,9 +275,9 @@ export function ProductCard({
       {/* Quick Add — Always at the bottom */}
       <button
         onClick={handleAddToCart}
-        className="mt-6 w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] lg:opacity-0 lg:group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
+        className="mt-4 w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] lg:opacity-0 lg:group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
       >
-        {isAdded ? "Added ✓" : (sizes.length > 0 && !selectedSize ? (showSizeError ? "Choose Size" : "Select Size") : "Add to Bag")}
+        {isAdded ? t('common.added') : (sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
       </button>
     </article>
   );

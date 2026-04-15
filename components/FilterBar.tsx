@@ -1,30 +1,35 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface FilterBarProps {
     allSizes: string[];
     allBrands: string[];
 }
 
-const SORT_OPTIONS = [
-    { label: "Newest Arrivals", value: "newest" },
-    { label: "Price: Low to High", value: "price_asc" },
-    { label: "Price: High to Low", value: "price_desc" },
-];
+
 
 export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
+    const { t } = useLanguage();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [openMenu, setOpenMenu] = useState<"size" | "brand" | "sort" | null>(null);
+    const [openMenu, setOpenMenu] = useState<"size" | "brand" | "sort" | "label" | null>(null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
+    const SORT_OPTIONS = useMemo(() => [
+        { label: t('filters.sort.newest'), value: "newest" },
+        { label: t('filters.sort.price_asc'), value: "price_asc" },
+        { label: t('filters.sort.price_desc'), value: "price_desc" },
+    ], [t]);
 
     // Refs for click-outside detection
     const desktopSortRef = useRef<HTMLDivElement>(null);
     const desktopSizeRef = useRef<HTMLDivElement>(null);
     const desktopBrandRef = useRef<HTMLDivElement>(null);
+    const desktopLabelRef = useRef<HTMLDivElement>(null);
     const mobileSortRef = useRef<HTMLDivElement>(null);
 
     // Prevent body scroll when mobile filters are open
@@ -40,6 +45,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
     const activeSort = searchParams.get("sort") || "newest";
     const activeSizes = searchParams.get("size")?.split(",") || [];
     const activeBrands = searchParams.get("brand")?.split(",") || [];
+    const activeLabels = searchParams.get("label")?.split(",") || [];
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -48,6 +54,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
             const isInside =
                 desktopSizeRef.current?.contains(target) ||
                 desktopBrandRef.current?.contains(target) ||
+                desktopLabelRef.current?.contains(target) ||
                 desktopSortRef.current?.contains(target) ||
                 mobileSortRef.current?.contains(target);
 
@@ -76,7 +83,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
         setOpenMenu(null);
     };
 
-    const toggleFilter = (type: "size" | "brand", value: string) => {
+    const toggleFilter = (type: "size" | "brand" | "label", value: string) => {
         const currentValues = searchParams.get(type)?.split(",") || [];
         let nextValues: string[];
         if (currentValues.includes(value)) {
@@ -89,7 +96,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
         }), { scroll: false });
     };
 
-    const selectedSortLabel = SORT_OPTIONS.find(o => o.value === activeSort)?.label || "Sort By";
+    const selectedSortLabel = SORT_OPTIONS.find(o => o.value === activeSort)?.label || t('filters.sort_by');
 
     return (
         <div className="w-full my-4 md:my-6 relative md:z-30">
@@ -100,10 +107,10 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                     <div className="hidden md:flex flex-1 items-center gap-12">
                         {/* Filter Status */}
                         <div className="flex items-center gap-3 pr-8 border-r border-black/10 flex-shrink-0">
-                            <span className="text-[10px] uppercase tracking-[0.4em] font-black text-black">Filter_Set</span>
-                            {(activeSizes.length > 0 || activeBrands.length > 0) && (
+                            <span className="text-[10px] uppercase tracking-[0.4em] font-black text-black">{t('filters.filter_set')}</span>
+                            {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0) && (
                                 <span className="flex items-center justify-center min-w-[18px] h-4.5 bg-black text-white text-[8px] font-mono font-bold px-1">
-                                    {activeSizes.length + activeBrands.length}
+                                    {activeSizes.length + activeBrands.length + activeLabels.length}
                                 </span>
                             )}
                         </div>
@@ -115,7 +122,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                     onClick={() => setOpenMenu(openMenu === "size" ? null : "size")}
                                     className={`flex items-center gap-4 text-[9px] uppercase tracking-[0.3em] font-black transition-all ${activeSizes.length > 0 ? "text-black" : "text-black/30 hover:text-black"}`}
                                 >
-                                    <span>Sizes</span>
+                                    <span>{t('filters.sizes')}</span>
                                     {activeSizes.length > 0 && <span className="text-[8px] font-mono">({activeSizes.length})</span>}
                                     <svg className={`transition-transform duration-500 ${openMenu === "size" ? "rotate-180" : ""}`} width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
                                         <path d="M6 9l6 6 6-6" />
@@ -145,7 +152,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                     onClick={() => setOpenMenu(openMenu === "brand" ? null : "brand")}
                                     className={`flex items-center gap-4 text-[9px] uppercase tracking-[0.3em] font-black transition-all ${activeBrands.length > 0 ? "text-black" : "text-black/30 hover:text-black"}`}
                                 >
-                                    <span>Brands</span>
+                                    <span>{t('filters.brands')}</span>
                                     {activeBrands.length > 0 && <span className="text-[8px] font-mono">({activeBrands.length})</span>}
                                     <svg className={`transition-transform duration-500 ${openMenu === "brand" ? "rotate-180" : ""}`} width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
                                         <path d="M6 9l6 6 6-6" />
@@ -168,6 +175,39 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 </div>
                             </div>
                         )}
+
+                        {/* Status/Label Dropdown */}
+                        <div className="relative" ref={desktopLabelRef}>
+                            <button
+                                onClick={() => setOpenMenu(openMenu === "label" ? null : "label")}
+                                className={`flex items-center gap-4 text-[9px] uppercase tracking-[0.3em] font-black transition-all ${activeLabels.length > 0 ? "text-black" : "text-black/30 hover:text-black"}`}
+                            >
+                                <span>{t('filters.labels')}</span>
+                                {activeLabels.length > 0 && <span className="text-[8px] font-mono">({activeLabels.length})</span>}
+                                <svg className={`transition-transform duration-500 ${openMenu === "label" ? "rotate-180" : ""}`} width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                    <path d="M6 9l6 6 6-6" />
+                                </svg>
+                            </button>
+
+                            <div className={`absolute left-0 mt-4 w-64 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "label" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
+                                <div className="flex flex-col p-2">
+                                    {[
+                                        { id: 'NEW', label: t('filters.label_options.new') },
+                                        { id: 'BESTSELLER', label: t('filters.label_options.bestseller') },
+                                        { id: 'SALE', label: t('filters.label_options.sale') }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => toggleFilter("label", opt.id)}
+                                            className={`w-full text-left px-4 py-3 text-[10px] uppercase tracking-[0.2em] font-black transition-all flex items-center justify-between ${activeLabels.includes(opt.id) ? "bg-black text-white" : "text-black/40 hover:text-black hover:bg-zinc-50"}`}
+                                        >
+                                            <span>{opt.label}</span>
+                                            {activeLabels.includes(opt.id) && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Mobile: Compact Architectural Filter Block */}
@@ -177,10 +217,10 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                             className="flex-1 h-full flex items-center justify-between border border-black px-4 text-[9px] uppercase tracking-[0.3em] font-black text-black active:bg-zinc-100 transition-all font-mono"
                         >
                             <div className="flex items-center gap-2">
-                                <span className="tracking-[0.5em]">FILTER</span>
-                                {(activeSizes.length > 0 || activeBrands.length > 0) && (
+                                <span className="tracking-[0.5em]">{t('filters.filter')}</span>
+                                {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0) && (
                                     <span className="w-4 h-4 bg-black text-white flex items-center justify-center font-mono text-[7px]">
-                                        {activeSizes.length + activeBrands.length}
+                                        {activeSizes.length + activeBrands.length + activeLabels.length}
                                     </span>
                                 )}
                             </div>
@@ -220,7 +260,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 onClick={() => setOpenMenu(openMenu === "sort" ? null : "sort")}
                                 className="flex items-center gap-4 text-[9px] uppercase tracking-[0.3em] font-black text-black group hover:opacity-60 transition-opacity"
                             >
-                                <span className="text-black/20 tracking-[0.2em]">Sort_By:</span>
+                                <span className="text-black/20 tracking-[0.2em]">{t('filters.sort_by_label')}</span>
                                 <span>{selectedSortLabel}</span>
                                 <svg className={`transition-transform duration-300 ${openMenu === "sort" ? "rotate-180" : ""}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
                                     <path d="M6 9l6 6 6-6" />
@@ -240,9 +280,9 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                             </div>
                         </div>
 
-                        {(activeSizes.length > 0 || activeBrands.length > 0 || activeSort !== "newest") && (
+                        {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0 || activeSort !== "newest") && (
                             <button onClick={() => router.push(pathname)} className="h-8 px-4 flex items-center justify-center bg-black text-white text-[8px] uppercase tracking-[0.3em] font-black hover:bg-black/80 transition-all">
-                                Reset
+                                {t('filters.reset')}
                             </button>
                         )}
                     </div>
@@ -259,7 +299,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                 <div className={`absolute right-0 top-0 h-full w-[85%] bg-white flex flex-col border-l border-black shadow-[-20px_0_40px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isMobileFiltersOpen ? "translate-x-0" : "translate-x-full"}`}>
                     {/* Header with Exit */}
                     <div className="p-6 border-b border-black flex items-center justify-between bg-white sticky top-0 z-10">
-                        <h2 className="text-[12px] uppercase tracking-[0.5em] font-black">Archive Filters</h2>
+                        <h2 className="text-[12px] uppercase tracking-[0.5em] font-black">{t('filters.archive_filters')}</h2>
                         <button onClick={() => setIsMobileFiltersOpen(false)} className="w-10 h-10 flex items-center justify-center border border-black hover:bg-black hover:text-white transition-colors">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                 <path d="M18 6L6 18M6 6l12 12" />
@@ -272,8 +312,8 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                         {allSizes.length > 0 && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[9px] uppercase tracking-[0.4em] font-black text-black">Sizes_Index</h3>
-                                    <span className="text-[7px] font-mono text-black/20">{allSizes.length} units</span>
+                                    <h3 className="text-[9px] uppercase tracking-[0.4em] font-black text-black">{t('filters.sizes_index')}</h3>
+                                    <span className="text-[7px] font-mono text-black/20">{allSizes.length} {t('filters.units')}</span>
                                 </div>
                                 <div className="grid grid-cols-6 gap-1.5">
                                     {allSizes.map((size) => (
@@ -293,8 +333,8 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                         {allBrands.length > 0 && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[10px] uppercase tracking-[0.4em] font-black text-black">Brands</h3>
-                                    <span className="text-[8px] font-mono text-black/20">{allBrands.length} manufacturers</span>
+                                    <h3 className="text-[10px] uppercase tracking-[0.4em] font-black text-black">{t('filters.brands')}</h3>
+                                    <span className="text-[8px] font-mono text-black/20">{allBrands.length} {t('filters.manufacturers')}</span>
                                 </div>
                                 <div className="flex flex-col space-y-2">
                                     {allBrands.map((brand) => (
@@ -310,20 +350,43 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 </div>
                             </div>
                         )}
+
+                        {/* Labels/Status Mobile */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-[10px] uppercase tracking-[0.4em] font-black text-black">{t('filters.labels')}</h3>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                {[
+                                    { id: 'NEW', label: t('filters.label_options.new') },
+                                    { id: 'BESTSELLER', label: t('filters.label_options.bestseller') },
+                                    { id: 'SALE', label: t('filters.label_options.sale') }
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => toggleFilter("label", opt.id)}
+                                        className={`h-12 flex items-center justify-between px-4 border border-black/10 transition-all ${activeLabels.includes(opt.id) ? "bg-black text-white border-black" : "bg-white text-black hover:border-black/30"}`}
+                                    >
+                                        <span className="text-[12px] uppercase tracking-[0.2em] font-black">{opt.label}</span>
+                                        {activeLabels.includes(opt.id) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Sticky Bottom Actions */}
                     <div className="absolute bottom-0 left-0 w-full p-6 border-t border-black bg-white flex flex-col gap-3">
-                        {(activeSizes.length > 0 || activeBrands.length > 0) && (
+                        {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0) && (
                             <button onClick={() => {
                                 router.push(pathname);
                                 setIsMobileFiltersOpen(false);
                             }} className="text-[9px] uppercase tracking-[0.3em] font-bold text-black border-b border-black w-max mx-auto pb-1 mb-2">
-                                Reset Filters
+                                {t('filters.reset_filters')}
                             </button>
                         )}
                         <button onClick={() => setIsMobileFiltersOpen(false)} className="w-full h-14 bg-black text-white text-[11px] uppercase tracking-[0.5em] font-black hover:bg-zinc-800 transition-colors shadow-[10px_10px_0px_rgba(0,0,0,0.05)]">
-                            Apply
+                            {t('filters.apply')}
                         </button>
                     </div>
                 </div>

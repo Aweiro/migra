@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCartStore } from "@/lib/stores/cart.store";
 import { useWishlistStore } from "@/lib/stores/wishlist.store";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function ProductActions({
     product,
@@ -11,6 +12,7 @@ export function ProductActions({
     product: { id: string; name: string; price: number; image?: string; slug: string; stock: number; isCustomOrder: boolean; label?: any };
     sizes?: string[];
 }) {
+    const { t } = useLanguage();
     const safeSizes = sizes || [];
     const [selectedSize, setSelectedSize] = useState<string | null>(safeSizes.length === 1 ? safeSizes[0] : null);
     const [isAdded, setIsAdded] = useState(false);
@@ -63,10 +65,10 @@ export function ProductActions({
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <span className={`text-[10px] uppercase tracking-[0.4em] font-bold transition-colors duration-300 ${sizeError ? "text-red-500" : "text-black/60"}`}>
-                            Select Size
+                            {t('product_actions.select_size')}
                         </span>
                         <button className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/40 border-b border-black/20 hover:text-black hover:border-black transition-colors">
-                            Size Guide
+                            {t('product_actions.size_guide')}
                         </button>
                     </div>
                     <div className={`flex flex-wrap gap-2 transition-all duration-300 ${sizeError ? "outline outline-1 outline-red-400 p-2" : ""}`}>
@@ -92,7 +94,7 @@ export function ProductActions({
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                             </svg>
-                            Please select a size before adding to cart
+                            {t('product_actions.select_size_error')}
                         </p>
                     </div>
                 </div>
@@ -102,7 +104,7 @@ export function ProductActions({
             <div className="flex items-center gap-3 border-t border-b border-black/5 py-4">
                 <div className={`w-2 h-2 rounded-full ${product.isCustomOrder ? "bg-orange-500" : (product.stock > 0 ? "bg-green-500" : "bg-red-500")}`} />
                 <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/60">
-                    {product.isCustomOrder ? "Made to Order" : (product.stock > 0 ? "Available in Stock" : "Out of Stock")}
+                    {product.isCustomOrder ? t('product_actions.made_to_order') : (product.stock > 0 ? t('product_actions.available') : t('product_actions.out_of_stock'))}
                 </span>
             </div>
 
@@ -113,7 +115,7 @@ export function ProductActions({
                     disabled={!product.isCustomOrder && product.stock <= 0}
                     className="w-full bg-black text-white py-4 text-[11px] uppercase tracking-[0.3em] font-bold hover:bg-black/90 transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isAdded ? "Added to Library ✓" : ((!product.isCustomOrder && product.stock <= 0) ? "Sold Out" : "Add to Library")}
+                    {isAdded ? t('product_actions.added_to_library') : ((!product.isCustomOrder && product.stock <= 0) ? t('product_actions.sold_out') : t('product_actions.add_to_library'))}
                 </button>
                 <button
                     onClick={handleWishlist}
@@ -125,7 +127,7 @@ export function ProductActions({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="mb-[1px]">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
-                    {isWishlisted ? "In Wishlist" : "Save for Later"}
+                    {isWishlisted ? t('product_actions.in_wishlist') : t('product_actions.save_for_later')}
                 </button>
             </div>
         </div>

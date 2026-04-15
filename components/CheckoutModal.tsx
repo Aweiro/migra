@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useCartStore, calculateCartTotal } from "@/lib/stores/cart.store";
 import { checkoutSchema } from "@/lib/validations/checkout";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -10,6 +11,7 @@ interface CheckoutModalProps {
 }
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
+    const { t } = useLanguage();
     const items = useCartStore((state) => state.items);
     const clearCart = useCartStore((state) => state.clearCart);
     const [name, setName] = useState("");
@@ -40,7 +42,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         const result = checkoutSchema.safeParse(payload);
 
         if (!result.success) {
-            const firstError = result.error.issues[0]?.message ?? "Please check your details.";
+            const firstError = t('checkout.error_details');
             setError(firstError);
             return;
         }
@@ -55,7 +57,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             });
 
             if (!response.ok) {
-                setError("Something went wrong. Please try again.");
+                setError(t('checkout.error_generic'));
                 return;
             }
 
@@ -66,7 +68,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 // We could redirect to a success page or just close and let cart show empty
             }, 3000);
         } catch {
-            setError("Could not submit order. Check your connection.");
+            setError(t('checkout.error_connection'));
         } finally {
             setIsSubmitting(false);
         }
@@ -101,23 +103,23 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                                 </svg>
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-xl font-black uppercase tracking-tighter">Order Received</h3>
-                                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/30">Thank you for your choice. We will contact you shortly.</p>
+                                <h3 className="text-xl font-black uppercase tracking-tighter">{t('checkout.order_received')}</h3>
+                                <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-black/30">{t('checkout.success_desc')}</p>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-10">
                             {/* Header */}
                             <div className="space-y-2">
-                                <span className="text-[9px] uppercase tracking-[0.5em] font-black text-black/20">Finalize Order</span>
-                                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">Checkout</h2>
+                                <span className="text-[9px] uppercase tracking-[0.5em] font-black text-black/20">{t('checkout.finalize_order')}</span>
+                                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{t('checkout.checkout')}</h2>
                             </div>
 
                             {/* Order Recap */}
                             <div className="border-y border-black/5 py-6">
                                 <div className="flex justify-between items-center text-[10px] uppercase tracking-[0.2em] font-bold text-black/60">
-                                    <span>Subtotal</span>
-                                    <span>€{totalPrice.toFixed(2)}</span>
+                                    <span>{t('cart.subtotal')}</span>
+                                    <span>${totalPrice.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -125,18 +127,18 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 ml-1">Full Name</label>
+                                        <label className="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 ml-1">{t('checkout.full_name')}</label>
                                         <input
                                             required
                                             type="text"
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
-                                            placeholder="IVAN IVANOV"
+                                            placeholder={t('checkout.name_placeholder')}
                                             className="w-full bg-black/[0.03] border-none px-4 py-4 text-[11px] uppercase tracking-[0.2em] font-bold placeholder:text-black/10 focus:ring-1 ring-black outline-none transition-all"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 ml-1">Phone Number</label>
+                                        <label className="text-[9px] uppercase tracking-[0.3em] font-black text-black/40 ml-1">{t('checkout.phone_number')}</label>
                                         <input
                                             required
                                             type="tel"
@@ -157,11 +159,11 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                                     disabled={isSubmitting}
                                     className="w-full bg-black text-white py-5 text-[10px] uppercase tracking-[0.4em] font-black hover:bg-black/90 active:scale-[0.98] transition-all disabled:opacity-50"
                                 >
-                                    {isSubmitting ? "Processing..." : `Complete Purchase — €${totalPrice.toFixed(2)}`}
+                                    {isSubmitting ? t('checkout.processing') : `${t('checkout.complete_purchase')}${totalPrice.toFixed(2)}`}
                                 </button>
 
                                 <p className="text-center text-black/20 text-[8px] uppercase tracking-widest leading-relaxed">
-                                    By clicking complete you agree to our terms <br /> and conditions of seasonal delivery.
+                                    {t('checkout.terms_agreement')}
                                 </p>
                             </form>
                         </div>
