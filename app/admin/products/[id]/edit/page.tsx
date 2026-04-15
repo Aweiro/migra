@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import EditProductForm from "./EditProductForm";
+import ProductForm from "../../ProductForm";
 
 import Link from "next/link";
 
@@ -45,7 +45,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
                     <h1 className="text-4xl font-black tracking-tight dark:text-white">Edit Product</h1>
                     <p className="text-sm text-gray-500 mt-2">{product.name}</p>
                 </div>
-                <EditProductForm product={serializedProduct} categories={serializedCategories} brands={brands} />
+                <ProductForm product={serializedProduct} categories={serializedCategories} brands={brands} />
             </div>
         </div>
     );

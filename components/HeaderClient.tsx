@@ -10,8 +10,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 type Subcategory = { id: string; name: string; slug: string };
 type Category = { id: string; name: string; slug: string; subcategories: Subcategory[] };
 
-export function HeaderClient({ categories }: { categories: Category[] }) {
-    const { language, setLanguage, t } = useLanguage();
+export function HeaderClient({ categories }: { categories: any[] }) {
+    const { language, setLanguage, t, getLocalized } = useLanguage();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const pathname = usePathname();
@@ -61,7 +61,7 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                             href={`/${category.slug}`}
                                             className="hover:text-black/50 transition-colors"
                                         >
-                                            {category.name}
+                                            {getLocalized(category)}
                                         </Link>
 
                                         {category.subcategories.length > 0 && (
@@ -73,7 +73,7 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                                             href={`/${category.slug}/${sub.slug}`}
                                                             className="block px-6 py-2 hover:bg-black/[0.02] transition-colors"
                                                         >
-                                                            {sub.name}
+                                                            {getLocalized(sub)}
                                                         </Link>
                                                     ))}
                                                 </div>
@@ -159,7 +159,7 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="block font-bold text-sm tracking-widest border-b border-black/5 pb-2"
                                 >
-                                    {category.name}
+                                    {getLocalized(category)}
                                 </Link>
                                 <div className="pl-2 space-y-3">
                                     {category.subcategories.map((sub) => (
@@ -169,7 +169,7 @@ export function HeaderClient({ categories }: { categories: Category[] }) {
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="block text-black/60 hover:text-black transition-colors"
                                         >
-                                            {sub.name}
+                                            {getLocalized(sub)}
                                         </Link>
                                     ))}
                                 </div>

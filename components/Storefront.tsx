@@ -133,7 +133,7 @@ export async function Storefront({
 
     const categories = (!categorySlug && !subcategorySlug)
         ? await prisma.category.findMany({
-            select: { id: true, name: true, slug: true, image: true },
+            select: { id: true, name: true, name_uk: true, name_ru: true, name_pl: true, slug: true, image: true },
             orderBy: { name: 'asc' }
         })
         : [];

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import CategoryForm from "./CategoryForm";
+import CategoryForm from "../CategoryForm";
 
 export const metadata = {
     title: "Create Category | Admin Panel",

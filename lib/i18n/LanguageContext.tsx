@@ -19,6 +19,7 @@ interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
     t: (key: string) => string;
+    getLocalized: (item: any, field?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -59,8 +60,15 @@ export function LanguageProvider({
         return typeof result === "string" ? result : key;
     };
 
+    const getLocalized = (item: any, field: string = "name"): string => {
+        if (!item) return "";
+        if (language === "en") return item[field] || "";
+        const localizedField = `${field}_${language}`;
+        return item[localizedField] || item[field] || "";
+    };
+
     return (
-        <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
+        <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t, getLocalized }}>
             {children}
         </LanguageContext.Provider>
     );

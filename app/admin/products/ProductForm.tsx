@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { submitProduct } from "./actions";
+import { submitProduct, editProductAction } from "./create/actions";
 import { useRouter } from "next/navigation";
+import { aiTranslateAction, aiGenerateDescriptionAction } from "../actions/ai_actions";
+import { useToast } from "@/lib/stores/toast.store";
 
 interface Category {
     id: string;
@@ -10,42 +12,67 @@ interface Category {
     subcategories: { id: string; name: string }[];
 }
 
+interface ProductFormProps {
+    categories: Category[];
+    brands?: string[];
+    product?: any; // Optional for edit mode
+}
+
 export default function ProductForm({
     categories,
     brands = [],
-}: {
-    categories: Category[];
-    brands?: string[];
-}) {
+    product,
+}: ProductFormProps) {
+    const isEdit = !!product;
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<string>("en");
-    const [names, setNames] = useState<Record<string, string>>({ en: "", uk: "", ru: "", pl: "" });
-    const [descriptions, setDescriptions] = useState<Record<string, string>>({ en: "", uk: "", ru: "", pl: "" });
-    const [isTranslating, setIsTranslating] = useState(false);
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [images, setImages] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
     const formRef = useRef<HTMLFormElement>(null);
 
+    // Lang State
+    const [activeTab, setActiveTab] = useState<string>("en");
+    const [names, setNames] = useState<Record<string, string>>({
+        en: product?.name || "",
+        uk: product?.name_uk || "",
+        ru: product?.name_ru || "",
+        pl: product?.name_pl || "",
+    });
+    const [descriptions, setDescriptions] = useState<Record<string, string>>({
+        en: product?.description || "",
+        uk: product?.description_uk || "",
+        ru: product?.description_ru || "",
+        pl: product?.description_pl || "",
+    });
+    const [isTranslating, setIsTranslating] = useState(false);
+
+    // Image State
+    const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
+    const [newImages, setNewImages] = useState<File[]>([]);
+    const [previews, setPreviews] = useState<string[]>([]);
+
     // Dropdown States
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-    const [selectedLabel, setSelectedLabel] = useState<string>("");
-    const [brandQuery, setBrandQuery] = useState("");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string>(product?.subcategory?.categoryId || "");
+    const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>(product?.subcategoryId || "");
+    const [selectedLabel, setSelectedLabel] = useState<string>(product?.label || "");
+    const [brandQuery, setBrandQuery] = useState(product?.brand || "");
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const newFiles = Array.from(e.target.files);
-            setImages((prev) => [...prev, ...newFiles]);
+            setNewImages((prev) => [...prev, ...newFiles]);
             const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
             setPreviews((prev) => [...prev, ...newPreviews]);
         }
     };
 
-    const removeImage = (index: number) => {
-        setImages((prev) => prev.filter((_, i) => i !== index));
+    const removeNewImage = (index: number) => {
+        setNewImages((prev) => prev.filter((_, i) => i !== index));
         setPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingImage = (index: number) => {
+        setExistingImages((prev) => prev.filter((_, i) => i !== index));
     };
 
     const currentCategory = categories.find((c) => c.id === selectedCategoryId);
@@ -58,7 +85,6 @@ export default function ProductForm({
         { value: "SALE", label: "SALE_REDUCTION" },
     ];
 
-    // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
@@ -72,7 +98,7 @@ export default function ProductForm({
 
     const handleNameChange = (lang: string, value: string) => {
         setNames(prev => ({ ...prev, [lang]: value }));
-        if (lang === "en") {
+        if (lang === "en" && !isEdit) {
             const slugInput = document.getElementById("slug-input") as HTMLInputElement;
             if (slugInput && !slugInput.value.trim() && value) {
                 slugInput.value = value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -86,28 +112,30 @@ export default function ProductForm({
 
     const handleAiTranslate = async () => {
         if (!names.en) {
-            alert("Input_Primary_Source_First");
+            showToast("INPUT_PRIMARY_SOURCE_FIRST", "warning");
             return;
         }
         setIsTranslating(true);
-        // Mocking AI translation delay
-        await new Promise(r => setTimeout(r, 1200));
+        try {
+            const [nameResult, descResult] = await Promise.all([
+                aiTranslateAction(names.en),
+                aiGenerateDescriptionAction(names.en)
+            ]);
 
-        setNames({
-            en: names.en,
-            uk: names.en,
-            ru: names.en,
-            pl: names.en,
-        });
+            if (nameResult.success && nameResult.data) setNames(nameResult.data);
+            if (descResult.success && descResult.data) setDescriptions(descResult.data);
 
-        setDescriptions({
-            en: descriptions.en,
-            uk: descriptions.en,
-            ru: descriptions.en,
-            pl: descriptions.en,
-        });
-
-        setIsTranslating(false);
+            if (!nameResult.success || !descResult.success) {
+                showToast("AI_SYNC_COMPLETED_WITH_ERRORS", "warning");
+            } else {
+                showToast("AI_SYNC_FULL_SUCCESS", "success");
+            }
+        } catch (error) {
+            console.error("AI Sync Error:", error);
+            showToast("AI_SERVICE_ERROR_RETRY", "error");
+        } finally {
+            setIsTranslating(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -115,7 +143,6 @@ export default function ProductForm({
         setLoading(true);
 
         const formData = new FormData(e.currentTarget);
-        // Add manual values from state
         formData.set("name", names.en);
         formData.set("name_uk", names.uk);
         formData.set("name_ru", names.ru);
@@ -130,35 +157,39 @@ export default function ProductForm({
         formData.set("label", selectedLabel);
         formData.set("brand", brandQuery);
 
-        images.forEach((img) => {
-            formData.append("images", img);
-        });
+        newImages.forEach((img) => formData.append("images", img));
 
         try {
-            const result = await submitProduct(formData);
+            const result = isEdit
+                ? await editProductAction(product.id, formData, existingImages)
+                : await submitProduct(formData);
+
             if (result.success) {
-                alert("ENTRY_COMMITTED_SUCCESSFULLY");
-                formRef.current?.reset();
-                setNames({ en: "", uk: "", ru: "", pl: "" });
-                setDescriptions({ en: "", uk: "", ru: "", pl: "" });
-                setImages([]);
-                setPreviews([]);
-                setSelectedCategoryId("");
-                setSelectedSubcategoryId("");
-                setSelectedLabel("");
-                setBrandQuery("");
+                showToast(isEdit ? "MODIFICATION_COMMITTED_SUCCESSFULLY" : "ENTRY_COMMITTED_SUCCESSFULLY", "success");
+                if (!isEdit) {
+                    formRef.current?.reset();
+                    setNames({ en: "", uk: "", ru: "", pl: "" });
+                    setDescriptions({ en: "", uk: "", ru: "", pl: "" });
+                    setNewImages([]);
+                    setPreviews([]);
+                    setSelectedCategoryId("");
+                    setSelectedSubcategoryId("");
+                    setSelectedLabel("");
+                    setBrandQuery("");
+                } else {
+                    router.push("/admin/products");
+                    router.refresh();
+                }
             } else {
-                alert("ERROR_CODE: " + result.error);
+                showToast("ERROR_CODE: " + result.error, "error");
             }
         } catch (err) {
             console.error(err);
-            alert("UNEXPECTED_SYSTEM_FAILURE");
+            showToast("UNEXPECTED_SYSTEM_FAILURE", "error");
         } finally {
             setLoading(false);
         }
     };
-
-    // [...] Inside return
 
     const languages = [
         { id: "en", label: "EN" },
@@ -167,17 +198,26 @@ export default function ProductForm({
         { id: "pl", label: "PL" },
     ];
 
+    // Pre-calculate Sale Price for Edit mode
+    const initialPrice = product ? Number(product.price) : 0;
+    const initialDiscountVal = product ? Number(product.discountAmount || 0) : 0;
+    const initialSalePrice = initialPrice - initialDiscountVal;
+
     return (
         <div className="py-12 px-6">
             <form ref={formRef} onSubmit={handleSubmit} className="max-w-6xl mx-auto">
                 <div className="mb-8 md:mb-16 space-y-3 md:space-y-4 text-left">
                     <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-1 md:w-1.5 h-6 bg-black dark:bg-white" />
-                        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white">New_Product_Entry</h1>
+                        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white">
+                            {isEdit ? "Modify_Entity" : "New_Product_Entry"}
+                        </h1>
                     </div>
-                    <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold text-black/40 dark:text-white/40">
-                        System Protocol v4.2 // Automated Indexing
-                    </p>
+                    {isEdit && (
+                        <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold text-black/40 dark:text-white/40">
+                            Product ID: {product.id.toUpperCase()} // Status: ONLINE
+                        </p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -246,6 +286,7 @@ export default function ProductForm({
                                         id="slug-input"
                                         type="text"
                                         name="slug"
+                                        defaultValue={product?.slug || ""}
                                         required
                                         className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-mono font-bold tracking-tighter outline-none focus:border-black dark:focus:border-white transition-all"
                                         placeholder="automata-generated-id"
@@ -258,7 +299,6 @@ export default function ProductForm({
                         <div className="space-y-6">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">02 // Structural Mapping</span>
                             <div className="grid grid-cols-2 gap-6">
-                                {/* Custom Category Select */}
                                 <div className="relative" data-dropdown-container>
                                     <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Category</label>
                                     <button
@@ -291,7 +331,6 @@ export default function ProductForm({
                                     )}
                                 </div>
 
-                                {/* Custom Subcategory Select */}
                                 <div className="relative" data-dropdown-container>
                                     <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Subcategory</label>
                                     <button
@@ -330,7 +369,6 @@ export default function ProductForm({
                         <div className="space-y-6">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">03 // System Attribution</span>
                             <div className="grid grid-cols-2 gap-6">
-                                {/* Brand Input with Placeholder */}
                                 <div className="relative" data-dropdown-container>
                                     <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Brand</label>
                                     <input
@@ -370,7 +408,6 @@ export default function ProductForm({
                                     )}
                                 </div>
 
-                                {/* Custom Special Label Select */}
                                 <div className="relative" data-dropdown-container>
                                     <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">Special Label</label>
                                     <button
@@ -408,6 +445,7 @@ export default function ProductForm({
                                     type="checkbox"
                                     name="isCustomOrder"
                                     id="isCustomOrder"
+                                    defaultChecked={product?.isCustomOrder || false}
                                     className="w-4 h-4 rounded-none border-black/20 dark:border-white/20 text-black dark:text-white focus:ring-black accent-black"
                                 />
                                 <label htmlFor="isCustomOrder" className="text-[10px] uppercase font-black tracking-widest text-black/60 dark:text-white/60 cursor-pointer">
@@ -430,6 +468,7 @@ export default function ProductForm({
                                             type="number"
                                             name="price"
                                             step="0.01"
+                                            defaultValue={product?.price || ""}
                                             required
                                             placeholder="0.00"
                                             className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
@@ -441,6 +480,7 @@ export default function ProductForm({
                                             type="number"
                                             name="salePrice"
                                             step="0.01"
+                                            defaultValue={isEdit && initialSalePrice < initialPrice ? initialSalePrice : ""}
                                             placeholder="Optional"
                                             className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
                                         />
@@ -453,6 +493,7 @@ export default function ProductForm({
                                 <input
                                     type="number"
                                     name="stock"
+                                    defaultValue={product?.stock || ""}
                                     placeholder="0"
                                     className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold outline-none focus:border-black dark:focus:border-white transition-all"
                                 />
@@ -467,6 +508,7 @@ export default function ProductForm({
                                 <input
                                     type="text"
                                     name="sizes"
+                                    defaultValue={product?.sizes?.join(", ") || ""}
                                     placeholder="XS, S, M, L, XL, OS"
                                     className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-bold uppercase tracking-widest outline-none focus:border-black dark:focus:border-white transition-all"
                                 />
@@ -476,6 +518,27 @@ export default function ProductForm({
                         {/* Assets */}
                         <div className="space-y-6">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 dark:text-white/30">06 // Visual Assets Protocol</span>
+
+                            {isEdit && existingImages.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="block text-[8px] uppercase font-black tracking-widest text-black/40">Current_Assets_In_Database</label>
+                                    <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                                        {existingImages.map((src, index) => (
+                                            <div key={index} className="aspect-square relative border border-black/10 p-1 group">
+                                                <img src={src} className="w-full h-full object-cover grayscale brightness-90" alt="" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeExistingImage(index)}
+                                                    className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-black"
+                                                >
+                                                    REMOVE
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="border border-black/20 dark:border-white/20 p-8 text-center relative group cursor-pointer hover:bg-black/[0.02] transition-all">
                                 <input
                                     type="file"
@@ -485,22 +548,26 @@ export default function ProductForm({
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                 />
                                 <div className="space-y-2">
-                                    <div className="text-[10px] text-black dark:text-white font-black uppercase tracking-[0.4em]">Asset_Push_Protocol</div>
-                                    <div className="text-[8px] uppercase tracking-widest text-black/30 dark:text-white/30">Upload Multi_Media Content</div>
+                                    <div className="text-[10px] text-black dark:text-white font-black uppercase tracking-[0.4em]">
+                                        {isEdit ? "Asset_Sync_Protocol" : "Asset_Push_Protocol"}
+                                    </div>
+                                    <div className="text-[8px] uppercase tracking-widest text-black/30 dark:text-white/30">
+                                        {isEdit ? "Append New Content" : "Upload Multi_Media Content"}
+                                    </div>
                                 </div>
                             </div>
 
                             {previews.length > 0 && (
                                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                                     {previews.map((src, index) => (
-                                        <div key={index} className="aspect-square relative border border-black/10 p-1 group">
+                                        <div key={index} className={`aspect-square relative border border-black/10 p-1 group ${isEdit ? 'border-dashed' : ''}`}>
                                             <img src={src} className="w-full h-full object-cover grayscale brightness-90" alt="" />
                                             <button
                                                 type="button"
-                                                onClick={() => removeImage(index)}
+                                                onClick={() => removeNewImage(index)}
                                                 className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-black"
                                             >
-                                                X
+                                                {isEdit ? "CANCEL" : "X"}
                                             </button>
                                         </div>
                                     ))}
@@ -521,7 +588,7 @@ export default function ProductForm({
                                 disabled={loading}
                                 className="w-full md:flex-[2] py-4 md:py-6 bg-black dark:bg-white text-white dark:text-black text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-transparent hover:text-black dark:hover:bg-transparent dark:hover:text-white transition-all disabled:opacity-20"
                             >
-                                {loading ? "INITIALIZING_UPLOAD..." : "SAVE_CHANGES"}
+                                {loading ? (isEdit ? "PROCESSING_SYNC..." : "INITIALIZING_UPLOAD...") : "SAVE_CHANGES"}
                             </button>
                         </div>
                     </div>

@@ -58,13 +58,13 @@ export function ProductGallery({ images, label }: { images: string[]; label?: st
                                     setIsZoomed(false);
                                     setActiveIndex(i);
                                 }}
-                                className={`relative w-18 h-24 shrink-0 transition-all duration-300 ${activeIndex === i ? "border-2 border-black opacity-100" : "border-2 border-transparent opacity-60 hover:opacity-100"}`}
+                                className={`relative w-18 h-24 shrink-0 transition-all duration-300 bg-[#f9f9f9] ${activeIndex === i ? "border-2 border-black opacity-100" : "border-2 border-transparent opacity-60 hover:opacity-100"}`}
                             >
                                 <Image
                                     src={src}
                                     alt={`Thumbnail ${i + 1}`}
                                     fill
-                                    className="object-cover"
+                                    className="object-contain p-1"
                                 />
                             </button>
                         ))}
@@ -99,8 +99,8 @@ export function ProductGallery({ images, label }: { images: string[]; label?: st
                 {label && (
                     <div className="absolute top-6 left-6 z-30">
                         <span className={`text-[11px] uppercase font-black tracking-[0.3em] px-3.5 py-1.5 shadow-xl ${label === 'BESTSELLER' ? 'bg-black text-white' :
-                                label === 'NEW' ? 'bg-white text-black border border-black/10' :
-                                    'bg-zinc-100 text-black'
+                            label === 'NEW' ? 'bg-white text-black border border-black/10' :
+                                'bg-zinc-100 text-black'
                             }`}>
                             {label === 'BESTSELLER' ? 'Hit' : label === 'NEW' ? 'New' : 'Sale'}
                         </span>

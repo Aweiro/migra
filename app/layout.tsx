@@ -17,6 +17,7 @@ import { headers, cookies } from "next/headers";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import NextTopLoader from 'nextjs-toploader';
 import { NavigationLoader } from "@/components/NavigationLoader";
+import { ToastContainer } from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Migra | Contextual Library",
@@ -56,6 +57,7 @@ export default async function RootLayout({
           <div id="global-nav-loader" className="fixed inset-0 z-[9998] opacity-0 pointer-events-none flex items-center justify-center bg-white/40 backdrop-blur-[2px] transition-all duration-700 ease-in-out">
             <NavigationLoader />
           </div>
+          <ToastContainer />
         </LanguageProvider>
       </body>
     </html>

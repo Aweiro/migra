@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import ProductForm from "./ProductForm";
+import ProductForm from "../ProductForm";
 import Link from "next/link";
 
 export const metadata = {

@@ -1,29 +1,52 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { createCategory, createSubcategory } from "./actions";
+import { createCategory, createSubcategory, updateCategory, updateSubcategory } from "./create/actions";
+import { aiTranslateAction } from "../actions/ai_actions";
+import { useToast } from "@/lib/stores/toast.store";
+import { useRouter } from "next/navigation";
 
 interface Category {
     id: string;
     name: string;
 }
 
-export default function CategoryForm({ categories }: { categories: Category[] }) {
-    const [activeTab, setActiveTab] = useState<"category" | "subcategory">("category");
+interface CategoryFormProps {
+    categories: Category[];
+    item?: any; // Optional for edit mode
+    initialType?: "category" | "subcategory";
+}
+
+export default function CategoryForm({
+    categories,
+    item,
+    initialType = "category"
+}: CategoryFormProps) {
+    const isEdit = !!item;
+    const itemType = isEdit ? (item.categoryId ? "subcategory" : "category") : initialType;
+
+    const { showToast } = useToast();
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"category" | "subcategory">(itemType as any);
     const [loading, setLoading] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
 
     const [activeLangTab, setActiveLangTab] = useState<string>("en");
-    const [names, setNames] = useState<Record<string, string>>({ en: "", uk: "", ru: "", pl: "" });
+    const [names, setNames] = useState<Record<string, string>>({
+        en: item?.name || "",
+        uk: item?.name_uk || "",
+        ru: item?.name_ru || "",
+        pl: item?.name_pl || "",
+    });
     const [isTranslating, setIsTranslating] = useState(false);
 
-    const [selectedCategoryId, setSelectedCategoryId] = useState("");
+    const [selectedCategoryId, setSelectedCategoryId] = useState(item?.categoryId || "");
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const handleNameChange = (lang: string, value: string) => {
         setNames(prev => ({ ...prev, [lang]: value }));
-        if (lang === "en") {
+        if (lang === "en" && !isEdit) {
             const slugInput = document.getElementById("slug-input") as HTMLInputElement;
             if (slugInput && !slugInput.value.trim() && value) {
                 slugInput.value = value.toLowerCase().replace(/[\s_]+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -33,18 +56,24 @@ export default function CategoryForm({ categories }: { categories: Category[] })
 
     const handleAiTranslate = async () => {
         if (!names.en) {
-            alert("Input_Primary_Source_First");
+            showToast("INPUT_PRIMARY_SOURCE_FIRST", "warning");
             return;
         }
         setIsTranslating(true);
-        await new Promise(r => setTimeout(r, 800));
-        setNames({
-            en: names.en,
-            uk: names.en,
-            ru: names.en,
-            pl: names.en,
-        });
-        setIsTranslating(false);
+        try {
+            const result = await aiTranslateAction(names.en);
+            if (result.success && result.data) {
+                setNames(result.data);
+                showToast("AI_SYNC_SUCCESS", "success");
+            } else {
+                showToast("AI_SYNC_FAILED: " + result.error, "error");
+            }
+        } catch (error) {
+            console.error(error);
+            showToast("AI_SERVICE_UNAVAILABLE", "error");
+        } finally {
+            setIsTranslating(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -63,22 +92,35 @@ export default function CategoryForm({ categories }: { categories: Category[] })
 
         try {
             let result;
-            if (activeTab === "category") {
-                result = await createCategory(formData);
+            if (isEdit) {
+                if (activeTab === "category") {
+                    result = await updateCategory(item.id, formData);
+                } else {
+                    result = await updateSubcategory(item.id, formData);
+                }
             } else {
-                result = await createSubcategory(formData);
+                if (activeTab === "category") {
+                    result = await createCategory(formData);
+                } else {
+                    result = await createSubcategory(formData);
+                }
             }
 
             if (result.success) {
-                alert(`SUCCESS: ${activeTab.toUpperCase()}_INITIALIZED`);
-                formRef.current?.reset();
-                window.location.reload();
+                showToast(isEdit ? "MODIFICATION_COMMITTED_SUCCESSFULLY" : `${activeTab.toUpperCase()}_INITIALIZED`, "success");
+                if (isEdit) {
+                    router.push("/admin/categories");
+                    router.refresh();
+                } else {
+                    formRef.current?.reset();
+                    window.location.reload();
+                }
             } else {
-                alert("ERROR_CODE: " + result.error);
+                showToast("ERROR_CODE: " + result.error, "error");
             }
         } catch (err) {
             console.error(err);
-            alert("SYSTEM_CRITICAL_FAILURE");
+            showToast("SYSTEM_CRITICAL_FAILURE", "error");
         } finally {
             setLoading(false);
         }
@@ -101,35 +143,39 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                     <div className="flex items-center gap-3 md:gap-4">
                         <div className="w-1 md:w-1.5 h-6 bg-black dark:bg-white" />
                         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-black dark:text-white leading-none">
-                            Define_Node
+                            {isEdit ? "Modify_Entity" : "Define_Node"}
                         </h2>
                     </div>
                     <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold text-black/40 dark:text-white/40">
-                        System Catalog // Metadata Protocol // v4.2
+                        {isEdit ? `ID: ${item.id.toUpperCase()}` : "System Catalog // Metadata Protocol // v4.2"}
                     </p>
                 </div>
 
-                <div className="flex mb-8 md:mb-12 border border-black dark:border-white">
-                    <button
-                        className={`flex-1 py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "category"
-                            ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "bg-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
-                            }`}
-                        onClick={() => setActiveTab("category")}
-                    >
-                        [01] Root
-                    </button>
-                    <div className="w-px bg-black dark:bg-white" />
-                    <button
-                        className={`flex-1 py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "subcategory"
-                            ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "bg-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
-                            }`}
-                        onClick={() => setActiveTab("subcategory")}
-                    >
-                        [02] Sub
-                    </button>
-                </div>
+                {!isEdit && (
+                    <div className="flex mb-8 md:mb-12 border border-black dark:border-white">
+                        <button
+                            type="button"
+                            className={`flex-1 py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "category"
+                                ? "bg-black dark:bg-white text-white dark:text-black"
+                                : "bg-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                                }`}
+                            onClick={() => setActiveTab("category")}
+                        >
+                            [01] Root
+                        </button>
+                        <div className="w-px bg-black dark:bg-white" />
+                        <button
+                            type="button"
+                            className={`flex-1 py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "subcategory"
+                                ? "bg-black dark:bg-white text-white dark:text-black"
+                                : "bg-transparent text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                                }`}
+                            onClick={() => setActiveTab("subcategory")}
+                        >
+                            [02] Sub
+                        </button>
+                    </div>
+                )}
 
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex gap-2 border-b border-black/[0.03] dark:border-white/[0.03] pb-1">
@@ -165,7 +211,6 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                 <form ref={formRef} onSubmit={handleSubmit} className="space-y-10">
                     <div className="space-y-6">
                         <div>
-
                             <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">
                                 {activeTab === "category" ? "Root_Name" : "Sub_Node_Name"} ({activeLangTab.toUpperCase()})
                             </label>
@@ -195,6 +240,7 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                                 id="slug-input"
                                 type="text"
                                 name="slug"
+                                defaultValue={item?.slug || ""}
                                 required
                                 className="w-full bg-white dark:bg-zinc-900 border border-black/20 dark:border-white/20 px-4 py-4 rounded-none text-xs text-black dark:text-white font-mono font-bold tracking-tighter outline-none focus:border-black dark:focus:border-white transition-all"
                                 placeholder="url-safe-id"
@@ -206,6 +252,15 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                                 <label className="block text-[10px] uppercase font-black tracking-widest mb-2 text-black dark:text-white">
                                     Node_Graphic_Asset
                                 </label>
+                                {item?.image && (
+                                    <div className="mb-6 p-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] flex items-center gap-6">
+                                        <img src={item.image} alt={item.name} className="w-24 h-24 object-cover grayscale brightness-90 border border-black/20 dark:border-white/20" />
+                                        <div className="space-y-1 overflow-hidden">
+                                            <span className="text-[8px] uppercase font-black text-black/40 dark:text-white/40">Current_Asset_Active</span>
+                                            <p className="text-[9px] font-mono text-black/60 dark:text-white/60 break-all truncate">{item.image.split('/').pop()}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="border border-black/20 dark:border-white/20 p-8 text-center relative group cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-all">
                                     <input
                                         type="file"
@@ -214,7 +269,7 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
                                     <div className="space-y-1">
-                                        <div className="text-[9px] text-black dark:text-white font-black uppercase tracking-[0.3em]">Select_File</div>
+                                        <div className="text-[9px] text-black dark:text-white font-black uppercase tracking-[0.3em]">{item?.image ? "Overwrite_Asset" : "Select_File"}</div>
                                         <div className="text-[8px] uppercase tracking-widest text-black/30 dark:text-white/30 bg-transparent">JPG / PNG / WEBP</div>
                                     </div>
                                 </div>
@@ -257,11 +312,20 @@ export default function CategoryForm({ categories }: { categories: Category[] })
                         )}
                     </div>
 
-                    <div className="pt-8">
+                    <div className="pt-8 flex flex-col md:flex-row gap-4">
+                        {isEdit && (
+                            <button
+                                type="button"
+                                onClick={() => router.push("/admin/categories")}
+                                className="w-full md:flex-1 py-4 md:py-6 bg-transparent text-black dark:text-white text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                            >
+                                __CANCEL
+                            </button>
+                        )}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 md:py-6 bg-black dark:bg-white text-white dark:text-black text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-transparent hover:text-black dark:hover:bg-transparent dark:hover:text-white transition-all disabled:opacity-20"
+                            className={`w-full ${isEdit ? "md:flex-[2]" : ""} py-4 md:py-6 bg-black dark:bg-white text-white dark:text-black text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] border border-black dark:border-white hover:bg-transparent hover:text-black dark:hover:bg-transparent dark:hover:text-white transition-all disabled:opacity-20`}
                         >
                             {loading ? "PROCESSING..." : "SAVE_CHANGES"}
                         </button>
