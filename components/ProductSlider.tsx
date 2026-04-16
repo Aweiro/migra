@@ -65,7 +65,7 @@ export function ProductSlider({ products, lang }: ProductSliderProps) {
     return (
         <div className="relative group/slider">
             {/* Scroll Buttons - Enhanced Design */}
-            <div className="flex items-center gap-2 absolute -top-16 md:-top-12 right-0 z-40">
+            <div className="flex items-center gap-2 absolute -top-17 md:-top-19 right-0 z-40">
                 <button
                     onClick={() => scroll("left")}
                     disabled={!canScrollLeft}
