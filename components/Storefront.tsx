@@ -22,6 +22,17 @@ interface Product {
     [key: string]: any;
 }
 
+interface Category {
+    id: string;
+    name: string;
+    name_uk?: string | null;
+    name_ru?: string | null;
+    name_pl?: string | null;
+    slug: string;
+    image?: string | null;
+    [key: string]: any;
+}
+
 export async function Storefront({
     categorySlug,
     subcategorySlug,

@@ -7,10 +7,25 @@ import { useCartStore } from "@/lib/stores/cart.store";
 import { useWishlistStore } from "@/lib/stores/wishlist.store";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-type Subcategory = { id: string; name: string; slug: string };
-type Category = { id: string; name: string; slug: string; subcategories: Subcategory[] };
+type Subcategory = {
+    id: string;
+    name: string;
+    name_uk?: string | null;
+    name_ru?: string | null;
+    name_pl?: string | null;
+    slug: string
+};
+type Category = {
+    id: string;
+    name: string;
+    name_uk?: string | null;
+    name_ru?: string | null;
+    name_pl?: string | null;
+    slug: string;
+    subcategories: Subcategory[]
+};
 
-export function HeaderClient({ categories }: { categories: any[] }) {
+export function HeaderClient({ categories }: { categories: Category[] }) {
     const { language, setLanguage, t, getLocalized } = useLanguage();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
