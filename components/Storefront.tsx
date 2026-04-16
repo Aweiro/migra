@@ -295,7 +295,7 @@ export async function Storefront({
                         <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/40">Index / 01-0{categories.length}</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {categories.map((cat: any) => (
+                        {categories.map((cat: Category) => (
                             <Link
                                 key={cat.id}
                                 href={`/${cat.slug}`}
