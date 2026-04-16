@@ -83,6 +83,14 @@ export async function Storefront({
     if (sort === 'price_asc') orderBy = { price: 'asc' };
     if (sort === 'price_desc') orderBy = { price: 'desc' };
 
+    const ITEMS_PER_PAGE = 16;
+    const currentPage = Number(searchParams?.page) || 1;
+    const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+
+    const totalProducts = await prisma.product.count({
+        where: whereClause
+    });
+
     const rawProducts = await prisma.product.findMany({
         where: whereClause,
         include: {
@@ -90,7 +98,9 @@ export async function Storefront({
                 include: { category: true }
             }
         },
-        orderBy
+        orderBy,
+        take: ITEMS_PER_PAGE,
+        skip: skip
     });
 
     const products: Product[] = JSON.parse(JSON.stringify(rawProducts));
@@ -253,7 +263,7 @@ export async function Storefront({
                                         </h1>
 
                                         <div className="flex items-center gap-4">
-                                            <span className="text-[10px] uppercase tracking-[0.4em] font-black text-white/40 md:text-black/40">{products.length} {t('common.objects')}</span>
+                                            <span className="text-[10px] uppercase tracking-[0.4em] font-black text-white/40 md:text-black/40">{totalProducts} {t('common.objects')}</span>
                                             <div className="w-8 h-[1px] bg-white/20 md:bg-black/10" />
                                             <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-white/20 md:text-black/10 italic">{t('home.contextual_library')} 26</span>
                                         </div>
@@ -370,10 +380,10 @@ export async function Storefront({
             <div className="mx-auto max-w-[1800px] px-6 pb-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 md:mb-8 border-b border-black pb-4 gap-2">
                     <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black">
-                        {products.length > 0 ? (categorySlug ? t('common.department_selection') : t('common.current_collection')) : t('common.end_of_library')}
+                        {totalProducts > 0 ? (categorySlug ? t('common.department_selection') : t('common.current_collection')) : t('common.end_of_library')}
                     </h3>
                     <div className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/40">
-                        {products.length} {t('common.items_available')}
+                        {totalProducts} {t('common.items_available')}
                     </div>
                 </div>
 
@@ -398,6 +408,64 @@ export async function Storefront({
                                 label={product.label as any}
                             />
                         ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalProducts > ITEMS_PER_PAGE && (
+                    <div className="mt-20 flex justify-center items-center gap-4">
+                        {currentPage > 1 && (
+                            <Link
+                                href={{
+                                    query: { ...searchParams, page: currentPage - 1 }
+                                }}
+                                className="w-12 h-12 border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </Link>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                            {Array.from({ length: Math.ceil(totalProducts / ITEMS_PER_PAGE) }).map((_, i) => {
+                                const pageNum = i + 1;
+                                // Show only current, first, last, and neighbors
+                                const isVisible = pageNum === 1 || pageNum === Math.ceil(totalProducts / ITEMS_PER_PAGE) || Math.abs(pageNum - currentPage) <= 1;
+
+                                if (!isVisible) {
+                                    if (pageNum === 2 || pageNum === Math.ceil(totalProducts / ITEMS_PER_PAGE) - 1) {
+                                        return <span key={pageNum} className="text-black/20 font-black">...</span>;
+                                    }
+                                    return null;
+                                }
+
+                                return (
+                                    <Link
+                                        key={pageNum}
+                                        href={{
+                                            query: { ...searchParams, page: pageNum }
+                                        }}
+                                        className={`w-12 h-12 flex items-center justify-center text-[10px] font-black tracking-widest transition-all duration-300 ${currentPage === pageNum ? "bg-black text-white" : "hover:bg-black/5 text-black/40 hover:text-black border border-black/5"}`}
+                                    >
+                                        {pageNum < 10 ? `0${pageNum}` : pageNum}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+
+                        {currentPage < Math.ceil(totalProducts / ITEMS_PER_PAGE) && (
+                            <Link
+                                href={{
+                                    query: { ...searchParams, page: currentPage + 1 }
+                                }}
+                                className="w-12 h-12 border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>
