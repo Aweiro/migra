@@ -1,29 +1,45 @@
-import { productSchema } from "@/lib/validations/product";
-import { createProduct } from "@/services/product.service";
 
-export async function POST(request: Request) {
-  const body: unknown = await request.json();
-  const result = productSchema.safeParse(body);
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
-  if (!result.success) {
-    return Response.json(
-      {
-        errors: result.error.flatten().fieldErrors,
-      },
-      { status: 400 },
-    );
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 12;
+  const categorySlug = searchParams.get("categorySlug");
+  const subcategorySlug = searchParams.get("subcategorySlug");
+  const sort = searchParams.get("sort") || "newest";
+
+  const skip = (page - 1) * limit;
+
+  const whereClause: any = { isActive: true };
+  if (subcategorySlug) {
+    whereClause.subcategory = { slug: subcategorySlug };
+  } else if (categorySlug) {
+    whereClause.subcategory = {
+      category: { slug: categorySlug }
+    };
   }
 
-  try {
-    const product = await createProduct(result.data);
+  let orderBy: any = { createdAt: "desc" };
+  if (sort === 'price_asc') orderBy = { price: 'asc' };
+  if (sort === 'price_desc') orderBy = { price: 'desc' };
 
-    return Response.json({ product }, { status: 201 });
-  } catch {
-    return Response.json(
-      {
-        error: "Product could not be created",
+  try {
+    const products = await prisma.product.findMany({
+      where: whereClause,
+      include: {
+        subcategory: {
+          include: { category: true }
+        }
       },
-      { status: 500 },
-    );
+      take: limit,
+      skip: skip,
+      orderBy
+    });
+
+    return NextResponse.json({ products });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }

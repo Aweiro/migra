@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { useCallback, useState, useRef, useEffect, useMemo, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface FilterBarProps {
@@ -18,6 +18,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
     const searchParams = useSearchParams();
     const [openMenu, setOpenMenu] = useState<"size" | "brand" | "sort" | "label" | null>(null);
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     const SORT_OPTIONS = useMemo(() => [
         { label: t('filters.sort.newest'), value: "newest" },
@@ -79,7 +80,9 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
     );
 
     const handleSort = (sort: string) => {
-        router.push(pathname + "?" + createQueryString({ sort }), { scroll: false });
+        startTransition(() => {
+            router.push(pathname + "?" + createQueryString({ sort }), { scroll: false });
+        });
         setOpenMenu(null);
     };
 
@@ -91,15 +94,26 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
         } else {
             nextValues = [...currentValues, value];
         }
-        router.push(pathname + "?" + createQueryString({
-            [type]: nextValues.length > 0 ? nextValues.join(",") : null
-        }), { scroll: false });
+        startTransition(() => {
+            router.push(pathname + "?" + createQueryString({
+                [type]: nextValues.length > 0 ? nextValues.join(",") : null
+            }), { scroll: false });
+        });
     };
 
     const selectedSortLabel = SORT_OPTIONS.find(o => o.value === activeSort)?.label || t('filters.sort_by');
 
     return (
-        <div className="w-full my-4 md:my-6 relative md:z-30">
+        <div className="w-full my-4 md:my-6 relative md:z-[40]">
+            {/* Loading Overlay */}
+            {isPending && (
+                <div className="fixed inset-0 z-[1000] bg-white/50 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-8 h-8 border-2 border-black border-t-transparent animate-spin" />
+                        <span className="text-[9px] uppercase tracking-[0.4em] font-black">{t('common.updating')}</span>
+                    </div>
+                </div>
+            )}
             <div className="mx-auto max-w-[1800px] px-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8 py-4 border-y border-black/5">
 
@@ -129,7 +143,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                     </svg>
                                 </button>
 
-                                <div className={`absolute left-0 mt-4 w-72 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-50 p-6 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "size" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
+                                <div className={`absolute left-0 mt-4 w-72 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-60 p-6 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "size" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
                                     <div className="grid grid-cols-4 gap-2">
                                         {allSizes.map((size) => (
                                             <button
@@ -159,7 +173,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                     </svg>
                                 </button>
 
-                                <div className={`absolute left-0 mt-4 w-64 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] max-h-[400px] overflow-y-auto no-scrollbar ${openMenu === "brand" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
+                                <div className={`absolute left-0 mt-4 w-64 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-60 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] max-h-[400px] overflow-y-auto no-scrollbar ${openMenu === "brand" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
                                     <div className="flex flex-col p-2">
                                         {allBrands.map((brand) => (
                                             <button
@@ -189,7 +203,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 </svg>
                             </button>
 
-                            <div className={`absolute left-0 mt-4 w-64 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "label" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
+                            <div className={`absolute left-0 mt-4 w-64 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-60 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "label" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
                                 <div className="flex flex-col p-2">
                                     {[
                                         { id: 'NEW', label: t('filters.label_options.new') },
@@ -239,7 +253,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 </svg>
                             </button>
 
-                            <div className={`absolute right-0 top-full mt-2 w-52 bg-white border border-black z-50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "sort" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}`}>
+                            <div className={`absolute right-0 top-full mt-2 w-52 bg-white border border-black z-60 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "sort" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-2 scale-95 pointer-events-none"}`}>
                                 {SORT_OPTIONS.map((option) => (
                                     <button
                                         key={option.value}
@@ -267,7 +281,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                                 </svg>
                             </button>
 
-                            <div className={`absolute right-0 mt-4 w-56 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-50 py-1.5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "sort" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
+                            <div className={`absolute right-0 mt-4 w-56 bg-white border border-black shadow-[25px_25px_0px_rgba(0,0,0,0.05)] z-60 py-1.5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${openMenu === "sort" ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" : "opacity-0 -translate-y-4 scale-95 pointer-events-none"}`}>
                                 {SORT_OPTIONS.map((option) => (
                                     <button
                                         key={option.value}
@@ -281,7 +295,7 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                         </div>
 
                         {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0 || activeSort !== "newest") && (
-                            <button onClick={() => router.push(pathname)} className="h-8 px-4 flex items-center justify-center bg-black text-white text-[8px] uppercase tracking-[0.3em] font-black hover:bg-black/80 transition-all">
+                            <button onClick={() => startTransition(() => router.push(pathname))} className="h-8 px-4 flex items-center justify-center bg-black text-white text-[8px] uppercase tracking-[0.3em] font-black hover:bg-black/80 transition-all">
                                 {t('filters.reset')}
                             </button>
                         )}
@@ -379,7 +393,9 @@ export function FilterBar({ allSizes, allBrands }: FilterBarProps) {
                     <div className="absolute bottom-0 left-0 w-full p-6 border-t border-black bg-white flex flex-col gap-3">
                         {(activeSizes.length > 0 || activeBrands.length > 0 || activeLabels.length > 0) && (
                             <button onClick={() => {
-                                router.push(pathname);
+                                startTransition(() => {
+                                    router.push(pathname);
+                                });
                                 setIsMobileFiltersOpen(false);
                             }} className="text-[9px] uppercase tracking-[0.3em] font-bold text-black border-b border-black w-max mx-auto pb-1 mb-2">
                                 {t('filters.reset_filters')}

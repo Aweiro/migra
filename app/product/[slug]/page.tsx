@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductActions } from "@/components/ProductActions";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductSlider } from "@/components/ProductSlider";
 import { Footer } from "@/components/Footer";
 import { getServerTranslation } from "@/lib/i18n/server";
 
@@ -53,7 +53,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             subcategoryId: product.subcategoryId,
             id: { not: product.id }
         },
-        take: 4,
+        take: 11,
         orderBy: { createdAt: "desc" }
     });
 
@@ -182,26 +182,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
                     <div className="mt-16 border-t border-black/5 pt-12">
-                        <div className="flex items-center justify-between mb-16">
+                        <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl md:text-3xl font-black text-black uppercase tracking-tighter">{t('product.related_context')}</h3>
                         </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
-                            {relatedProducts.map((p) => (
-                                <ProductCard
-                                    key={p.id}
-                                    id={p.id}
-                                    title={(lang === 'en' ? p.name : (p as any)[`name_${lang}`] || p.name)}
-                                    slug={p.slug}
-                                    price={Number(p.price)}
-                                    image={p.images?.[0] || "/window.svg"}
-                                    hoverImage={p.images?.[1]}
-                                    allImages={p.images}
-                                    discountAmount={Number(p.discountAmount)}
-                                    sizes={p.sizes}
-                                    label={(p as any).label}
-                                />
-                            ))}
-                        </div>
+                        <ProductSlider products={relatedProducts as any} lang={lang} />
                     </div>
                 )}
             </div>

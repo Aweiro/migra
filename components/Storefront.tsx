@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { FilterBar } from "./FilterBar";
 import { getServerTranslation } from "@/lib/i18n/server";
+import { InfiniteProductGrid } from "./InfiniteProductGrid";
+import { ProductSlider } from "./ProductSlider";
 
 interface Product {
     id: string;
@@ -18,7 +20,7 @@ interface Product {
     images: string[];
     sizes: string[];
     brand?: string;
-    label?: string;
+    label?: 'BESTSELLER' | 'NEW' | 'SALE' | null;
     [key: string]: any;
 }
 
@@ -56,6 +58,7 @@ export async function Storefront({
     }
 
     // Apply Filters
+    const limit = 12;
     const sort = typeof searchParams?.sort === 'string' ? searchParams.sort : 'newest';
     const selectedSizes = typeof searchParams?.size === 'string' ? searchParams.size.split(',') : [];
     const selectedBrands = typeof searchParams?.brand === 'string' ? searchParams.brand.split(',') : [];
@@ -83,7 +86,7 @@ export async function Storefront({
     if (sort === 'price_asc') orderBy = { price: 'asc' };
     if (sort === 'price_desc') orderBy = { price: 'desc' };
 
-    const ITEMS_PER_PAGE = 15;
+    const ITEMS_PER_PAGE = limit;
     const currentPage = Number(searchParams?.page) || 1;
     const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -125,7 +128,13 @@ export async function Storefront({
     allSizes.sort();
     allBrands.sort();
 
-    const popularProducts = products.slice(0, 4);
+    // Fetch Popular Products (Bestsellers or Special Label)
+    const rawPopular = await prisma.product.findMany({
+        where: { isActive: true },
+        take: 12,
+        orderBy: { createdAt: "desc" } // In a real app, this might be by sales/views
+    });
+    const popularProducts: Product[] = JSON.parse(JSON.stringify(rawPopular));
 
     let categoryData = null;
     let subcategoryData = null;
@@ -378,95 +387,39 @@ export async function Storefront({
 
             {/* Product Grid (Moved Up) */}
             <div className="mx-auto max-w-[1800px] px-6 pb-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 md:mb-8 border-b border-black pb-4 gap-2">
-                    <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black">
-                        {totalProducts > 0 ? (categorySlug ? t('common.department_selection') : t('common.current_collection')) : t('common.end_of_library')}
-                    </h3>
-                    <div className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/40">
-                        {totalProducts} {t('common.items_available')}
+                <div className="flex items-center justify-between mb-4 md:mb-8 border-b border-black pb-4 gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 overflow-hidden">
+                        <h3 className="text-[11px] uppercase tracking-[0.5em] font-black text-black truncate">
+                            {totalProducts > 0 ? (categorySlug ? t('common.department_selection') : t('common.current_collection')) : t('common.end_of_library')}
+                        </h3>
+                        <div className="text-[9px] uppercase tracking-[0.2em] font-bold text-black/40 flex-shrink-0">
+                            {totalProducts} {t('common.items_available')}
+                        </div>
                     </div>
                 </div>
 
-                {products.length === 0 ? (
+                {totalProducts === 0 ? (
                     <div className="py-40 text-center">
                         <h3 className="text-[12px] uppercase tracking-[0.4em] font-black text-black">{t('common.empty_library')}</h3>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-16 md:gap-x-10 md:gap-y-10">
-                        {products.map((product: Product) => (
-                            <ProductCard
-                                key={product.id}
-                                id={product.id}
-                                title={(lang === 'en' ? product.name : product[`name_${lang}`] || product.name)}
-                                slug={product.slug}
-                                price={Number(product.price)}
-                                image={product.images?.[0] || "/window.svg"}
-                                hoverImage={product.images?.[1]}
-                                allImages={product.images}
-                                discountAmount={Number(product.discountAmount)}
-                                sizes={product.sizes}
-                                label={product.label as any}
+                    <>
+                        {(!categorySlug && !subcategorySlug && !hideHero) ? (
+                            <ProductSlider
+                                products={products}
+                                lang={lang}
                             />
-                        ))}
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {totalProducts > ITEMS_PER_PAGE && (
-                    <div className="mt-20 flex justify-center items-center gap-4">
-                        {currentPage > 1 && (
-                            <Link
-                                href={{
-                                    query: { ...searchParams, page: currentPage - 1 }
-                                }}
-                                className="w-12 h-12 border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </Link>
+                        ) : (
+                            <InfiniteProductGrid
+                                initialProducts={products}
+                                totalProducts={totalProducts}
+                                categorySlug={categorySlug}
+                                subcategorySlug={subcategorySlug}
+                                sort={sort}
+                                lang={lang}
+                            />
                         )}
-
-                        <div className="flex items-center gap-2">
-                            {Array.from({ length: Math.ceil(totalProducts / ITEMS_PER_PAGE) }).map((_, i) => {
-                                const pageNum = i + 1;
-                                // Show only current, first, last, and neighbors
-                                const isVisible = pageNum === 1 || pageNum === Math.ceil(totalProducts / ITEMS_PER_PAGE) || Math.abs(pageNum - currentPage) <= 1;
-
-                                if (!isVisible) {
-                                    if (pageNum === 2 || pageNum === Math.ceil(totalProducts / ITEMS_PER_PAGE) - 1) {
-                                        return <span key={pageNum} className="text-black/20 font-black">...</span>;
-                                    }
-                                    return null;
-                                }
-
-                                return (
-                                    <Link
-                                        key={pageNum}
-                                        href={{
-                                            query: { ...searchParams, page: pageNum }
-                                        }}
-                                        className={`w-12 h-12 flex items-center justify-center text-[10px] font-black tracking-widest transition-all duration-300 ${currentPage === pageNum ? "bg-black text-white" : "hover:bg-black/5 text-black/40 hover:text-black border border-black/5"}`}
-                                    >
-                                        {pageNum < 10 ? `0${pageNum}` : pageNum}
-                                    </Link>
-                                );
-                            })}
-                        </div>
-
-                        {currentPage < Math.ceil(totalProducts / ITEMS_PER_PAGE) && (
-                            <Link
-                                href={{
-                                    query: { ...searchParams, page: currentPage + 1 }
-                                }}
-                                className="w-12 h-12 border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all duration-300"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </Link>
-                        )}
-                    </div>
+                    </>
                 )}
             </div>
 
@@ -499,7 +452,7 @@ export async function Storefront({
 
             {/* Popular Products Section (Fixed Visibility) */}
             {!hideHero && !categorySlug && !subcategorySlug && popularProducts.length > 0 && (
-                <div className="md:py-16 py-8 border-t border-black/5">
+                <div className="md:py-10 py-8 border-t border-black/5">
                     <div className="mx-auto max-w-[1800px] px-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
                             <div className="space-y-2">
@@ -510,23 +463,7 @@ export async function Storefront({
                                 {t('common.view_entire_archive')}
                             </Link>
                         </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
-                            {popularProducts.map((product: Product) => (
-                                <ProductCard
-                                    key={`popular-${product.id}`}
-                                    id={product.id}
-                                    title={(lang === 'en' ? product.name : product[`name_${lang}`] || product.name)}
-                                    slug={product.slug}
-                                    price={Number(product.price)}
-                                    image={product.images?.[0] || "/window.svg"}
-                                    hoverImage={product.images?.[1]}
-                                    allImages={product.images}
-                                    discountAmount={Number(product.discountAmount)}
-                                    sizes={product.sizes}
-                                    label={product.label as any}
-                                />
-                            ))}
-                        </div>
+                        <ProductSlider products={popularProducts} lang={lang} />
                     </div>
                 </div>
             )}

@@ -34,7 +34,8 @@
         "qty": "Qty",
         "price": "Price",
         "total": "Total",
-        "language": "Language"
+        "language": "Language",
+        "updating": "Updating..."
     },
     "home": {
         "hero_title_1": "Pure",

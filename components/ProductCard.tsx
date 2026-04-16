@@ -53,6 +53,7 @@ export function ProductCard({
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -237,18 +238,18 @@ export function ProductCard({
         </div>
       </div>
 
-      {/* 4. Details Section (Title Linkable, sizes buttons NOT linkable) */}
-      <div className="flex flex-col pt-4 space-y-1 flex-1">
-        {slug ? (
-          <Link href={`/product/${slug}`} className="text-[12px] uppercase tracking-wider font-medium text-black truncate hover:text-black/50 transition-colors">
-            {title}
-          </Link>
-        ) : (
-          <h3 className="text-[12px] uppercase tracking-wider font-medium text-black truncate">{title}</h3>
-        )}
+      {/* 4. Details Section (Title, Price under it, sizes below) */}
+      <div className="flex flex-col pt-4 space-y-3 flex-1">
+        <div className="flex flex-col space-y-1">
+          {slug ? (
+            <Link href={`/product/${slug}`} className="text-[12px] uppercase tracking-wider font-medium text-black truncate hover:text-black/50 transition-colors">
+              {title}
+            </Link>
+          ) : (
+            <h3 className="text-[12px] uppercase tracking-wider font-medium text-black truncate">{title}</h3>
+          )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-3 mt-auto pt-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 pt-4">
             <span className="text-[12px] font-bold text-black">
               {formatPrice(finalPrice, currency)}
             </span>
@@ -258,42 +259,70 @@ export function ProductCard({
               </span>
             )}
           </div>
+        </div>
 
-          {sizes.length > 0 && (
-            <div className={`flex flex-wrap gap-1 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-x-2 lg:group-hover:translate-x-0 ${showSizeError ? "scale-105" : ""}`}>
-              {sizes.slice(0, 8).map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => {
-                    setSelectedSize(selectedSize === size ? null : size);
-                    setShowSizeError(false);
-                  }}
-                  className={`min-w-[24px] h-6 flex items-center justify-center text-[9px] font-bold border transition-colors ${selectedSize === size
-                    ? "bg-black text-white border-black"
-                    : showSizeError
-                      ? "border-red-500 text-red-500 animate-pulse"
-                      : "bg-white text-black/40 border-black/10 hover:border-black hover:text-black"
-                    }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          )}
+        {sizes.length > 0 && (
+          <div className={`flex flex-wrap gap-1 transition-all duration-300 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-x-2 lg:group-hover:translate-x-0 ${showSizeError ? "scale-105" : ""}`}>
+            {(isExpanded ? sizes : sizes.slice(0, 5)).map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedSize(selectedSize === size ? null : size);
+                  setShowSizeError(false);
+                }}
+                className={`min-w-[24px] h-6 px-1 flex items-center justify-center text-[8px] font-bold border transition-colors ${selectedSize === size
+                  ? "bg-black text-white border-black"
+                  : showSizeError
+                    ? "border-red-500 text-red-500 animate-pulse"
+                    : "bg-white text-black/40 border-black/10 hover:border-black hover:text-black"
+                  }`}
+              >
+                {size}
+              </button>
+            ))}
+            {sizes.length > 5 && !isExpanded && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsExpanded(true);
+                }}
+                className="h-6 px-1.5 flex items-center justify-center text-[8px] font-black text-black/25 bg-zinc-50 border border-black/5 hover:bg-black hover:text-white hover:border-black transition-all"
+              >
+                +{sizes.length - 5}
+              </button>
+            )}
+            {isExpanded && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsExpanded(false);
+                }}
+                className="h-6 px-1.5 flex items-center justify-center text-[8px] font-black text-black/40 hover:text-black transition-all"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 15l-6-6-6 6" /></svg>
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto pt-2">
+          {/* 5. Quick Add Button */}
+          <button
+            onClick={handleAddToCart}
+            type="button"
+            className="w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] lg:opacity-0 lg:group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
+          >
+            {isAdded ? t('common.added') : (sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
+          </button>
         </div>
       </div>
-
-      {/* 5. Quick Add Button */}
-      <button
-        onClick={handleAddToCart}
-        type="button"
-        className="mt-4 w-full py-3 bg-black text-white text-[10px] uppercase font-bold tracking-[0.2em] lg:opacity-0 lg:group-hover:opacity-100 hover:bg-zinc-800 hover:tracking-[0.25em] active:scale-[0.98] transition-all duration-300 z-10 relative"
-      >
-        {isAdded ? t('common.added') : (sizes.length > 0 && !selectedSize ? (showSizeError ? t('common.choose_size') : t('common.select_size')) : t('common.add_to_bag'))}
-      </button>
     </article>
   );
 }
-
-

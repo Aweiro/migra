@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore, calculateCartTotal } from "@/lib/stores/cart.store";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Footer } from "@/components/Footer";
@@ -16,6 +16,33 @@ export default function CartPage() {
   const clearCart = useCartStore((state) => state.clearCart);
   const totalPrice = calculateCartTotal(items);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <main className="flex-1 flex flex-col min-h-screen justify-between bg-white pt-6 border-t border-black/[0.03]">
+        <div className="mx-auto w-full max-w-[1500px] px-6 mb-16">
+          <div className="h-10 border-b border-black/[0.1] mb-12 animate-pulse bg-zinc-50" />
+          <div className="space-y-8">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-8 animate-pulse border-b border-black/5 pb-8">
+                <div className="w-20 h-20 bg-zinc-100" />
+                <div className="flex-1 space-y-4">
+                  <div className="h-4 bg-zinc-100 w-1/3" />
+                  <div className="h-3 bg-zinc-50 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 flex flex-col min-h-screen justify-between bg-white pt-6 border-t border-black/[0.03]">

@@ -34,7 +34,8 @@
         "qty": "К-сть",
         "price": "Ціна",
         "total": "Всього",
-        "language": "Мова"
+        "language": "Мова",
+        "updating": "Оновлення..."
     },
     "home": {
         "hero_title_1": "Новий",
