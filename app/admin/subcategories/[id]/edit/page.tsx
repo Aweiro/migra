@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import CategoryForm from "../../../categories/create/CategoryForm";
+import CategoryForm from "../../../categories/CategoryForm";
 
 export default async function EditSubcategoryPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
