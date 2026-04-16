@@ -160,17 +160,21 @@ export function ProductCard({
             </div>
 
             {/* Mobile View: Carousel */}
-            <div className="md:hidden absolute inset-0 p-8">
+            <div className="md:hidden absolute inset-0">
               {carouselImages.map((img, idx) => (
-                <Image
+                <div
                   key={idx}
-                  src={img}
-                  alt={`${title} - view ${idx + 1}`}
-                  fill
-                  sizes="100vw"
-                  className={`object-contain transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${idx === currentImgIdx ? (isLoaded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-0") : "opacity-0 translate-x-[15%]"}`}
-                  onLoad={() => setIsLoaded(true)}
-                />
+                  className={`absolute inset-4 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${idx === currentImgIdx ? (isLoaded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-0") : "opacity-0 translate-x-[15%]"}`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${title} - view ${idx + 1}`}
+                    fill
+                    sizes="100vw"
+                    className="object-contain"
+                    onLoad={() => setIsLoaded(true)}
+                  />
+                </div>
               ))}
             </div>
 
