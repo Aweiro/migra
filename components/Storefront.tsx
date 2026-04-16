@@ -83,7 +83,7 @@ export async function Storefront({
     if (sort === 'price_asc') orderBy = { price: 'asc' };
     if (sort === 'price_desc') orderBy = { price: 'desc' };
 
-    const ITEMS_PER_PAGE = 16;
+    const ITEMS_PER_PAGE = 15;
     const currentPage = Number(searchParams?.page) || 1;
     const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 

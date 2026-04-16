@@ -52,6 +52,7 @@ export function ProductCard({
   const [showSizeError, setShowSizeError] = useState(false);
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -143,7 +144,8 @@ export function ProductCard({
                 alt={title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 320px"
-                className={`object-contain transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${hoverImage ? "group-hover/img:opacity-0 group-hover/img:scale-105 group-hover/img:-translate-x-3 group-hover/img:blur-sm" : "group-hover/img:opacity-90"}`}
+                className={`object-contain transition-all duration-[1.5s] ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${!isLoaded ? "opacity-0 scale-95 blur-md" : "opacity-100 scale-100 blur-0"} ${hoverImage ? "group-hover/img:opacity-0 group-hover/img:scale-105 group-hover/img:-translate-x-3 group-hover/img:blur-sm" : "group-hover/img:opacity-90"}`}
+                onLoad={() => setIsLoaded(true)}
               />
               {hoverImage && (
                 <Image
@@ -165,7 +167,8 @@ export function ProductCard({
                   alt={`${title} - view ${idx + 1}`}
                   fill
                   sizes="100vw"
-                  className={`object-contain transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${idx === currentImgIdx ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[15%]"}`}
+                  className={`object-contain transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] p-4 ${idx === currentImgIdx ? (isLoaded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-0") : "opacity-0 translate-x-[15%]"}`}
+                  onLoad={() => setIsLoaded(true)}
                 />
               ))}
             </div>
